@@ -72,8 +72,9 @@ def getkey(id : int):
 
     return cur.fetchall()
 
-insertkey("hi", True, True)
+def getkeyid(key : str):
+    cur.execute("""SELECT ID FROM apikeys WHERE apikey = ? ORDER BY ID DESC""",
+        (key,)
+    )
 
-print(getkey(1))
-
-# initdb()
+    return cur.fetchall()
