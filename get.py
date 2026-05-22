@@ -6,7 +6,12 @@ url = "https://map.earthmc.net/tiles/players.json"
 def getcoords():
     return json.loads(requests.get(url).content)['players']
 
-def convertcoord(coords):
+def findplayer(name, coordslist):
+    for coord in coordslist:
+        if coord['name'] == name:
+            return coord
+
+def convertcoord(coord):
     return {
         "name": coord['name'],
         "uuid": coord['uuid'],
@@ -16,12 +21,16 @@ def convertcoord(coords):
         "yaw": coord['yaw']
     }
 
-def findplayer(name, coordslist):
-    for coord in coordslist:
-        if coord['name'] == name:
-            return coord
-        
+def easyfindplayer(username):
+    req = getcoords()
+    coords = findplayer(username, req)
+    
+    if not coords:
+        return None
+
+    return convertcoord(coords)
 # def findplayerlist(name, coordslist):
 
-# print(findplayer("cautionarytale08", getcoords()))
-print(findplayer(input("username >"), getcoords()))
+uname = "cautionarytale08"
+print(findplayer(uname, getcoords()))
+print(easyfindplayer(uname))
