@@ -16,8 +16,14 @@ def addtoken(createperms : bool, readperms : bool):
 
 def checkcreateperms(key):
     keyid = sql.getkeyid(key)
-    return sql.getkey(keyid)
+    if not keyid:
+        return False
+
+    return sql.getkey(keyid[0][0])]
 
 def checkreadpems(key):
     keyid = sql.getkeyid(key)
     return sql.getkey(keyid)
+
+# print(addtoken(True, True))
+print(checkcreateperms("QbjuZignEsdOoi78gDLY3Q"))
