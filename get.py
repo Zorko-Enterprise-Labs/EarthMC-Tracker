@@ -29,8 +29,3 @@ def easyfindplayer(username):
         return None
 
     return convertcoord(coords)
-# def findplayerlist(name, coordslist):
-
-uname = "cautionarytale08"
-print(findplayer(uname, getcoords()))
-print(easyfindplayer(uname))
