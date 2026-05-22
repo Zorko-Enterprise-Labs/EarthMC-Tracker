@@ -35,9 +35,15 @@ def getsnapshots(uuid : str):
     else:
         return None
 
-def gettownfromid(townid : int):
-    cur.execute("""SELECT * FROM towns WHERE id = ?""",
-        (townid,)
+def getlatestsnapshot(uuid : str):
+    snapshots = getsnapshots(uuid)
+    if not snapshots:
+        return None
+    return snapshots[0]
+
+def getsnapshotfromid(snapshotid : int):
+    cur.execute("""SELECT * FROM snapshots WHERE ID = ?""",
+        (snapshotid,)
     )
 
     result = cur.fetchall()
@@ -46,10 +52,3 @@ def gettownfromid(townid : int):
         return result[0]
     else:
         return None
-
-def listtowns():
-    cur.execute("""SELECT * FROM towns""")
-
-    return cur.fetchall()
-
-print(getsnapshots("tets"))
