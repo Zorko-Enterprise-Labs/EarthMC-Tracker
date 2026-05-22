@@ -67,7 +67,7 @@ def removekey(id : int):
 
 def getkey(id : int):
     cur.execute("""SELECT * FROM apikeys WHERE ID = ?""",
-        (id,)
+        (id)
     )
 
     return cur.fetchall()
