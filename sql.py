@@ -52,3 +52,29 @@ def getsnapshotfromid(snapshotid : int):
         return result[0]
     else:
         return None
+
+def insertkey(key : str, createperms : bool, readperms : bool):
+    cur.execute("""INSERT INTO apikeys (createperms, readperms, apikey) VALUES (?,?,?)""",
+        (createperms, readperms, key)
+    )
+    con.commit()
+
+def removekey(id : int):
+    cur.execute("""DELETE FROM apikeys WHERE ID = ?""",
+        (id,)
+    )
+    con.commit()
+
+def getkey(id : int):
+    cur.execute("""SELECT * FROM apikeys WHERE ID = ?""",
+        (id,)
+    )
+
+    return cur.fetchall()
+
+def getkeyid(key : str):
+    cur.execute("""SELECT ID FROM apikeys WHERE apikey = ? ORDER BY ID DESC""",
+        (key,)
+    )
+
+    return cur.fetchall()
