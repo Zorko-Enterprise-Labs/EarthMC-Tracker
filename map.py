@@ -3,7 +3,7 @@ import math
 import os
 import time
 
-# --- Configuration ---
+# --- Configuration ----
 # Minecraft coordinate bounds
 MIN_X = -64702
 MAX_X = 64702
