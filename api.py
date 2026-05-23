@@ -17,7 +17,7 @@ def snapshot():
         if action == "track":
             uuid = reqjson['uuid']
 
-            coords = api_interface.easyfindplayer(uuid)
+            coords = api_interface.easyfindplayer(uuid, api_interface.getcoordslist())
             
             print(coords)
             

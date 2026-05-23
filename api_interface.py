@@ -11,7 +11,7 @@ apiurl = "https://api.earthmc.net/v4"
 playerapiurl = f"{apiurl}/players/"
 mapurl = "https://map.earthmc.net/tiles/players.json"
 
-def getcoords():
+def getcoordslist():
     return json.loads(requests.get(mapurl).content)['players']
 
 def findplayer(uuid, coordslist):
@@ -78,10 +78,10 @@ def checkonline(uuid : str):
     else:
         return False
 
-def easyfindplayer(uuid):
+def easyfindplayer(uuid, coordslist):
     safeuuid = correctuuid(uuid)
-    req = getcoords()
-    coords = findplayer(safeuuid, req)
+    coords = findplayer(uuid, coordslist)
+    print(coords)
     isOnline = checkonline(safeuuid)
 
     if not coords:
