@@ -4,6 +4,7 @@ import sql
 import api_interface
 import apikeys
 import errors
+from datetime import datetime, timedelta
 
 app = Flask("API")
 
@@ -70,6 +71,23 @@ def formatgetresponse(snapshot, isOnline):
         }
     return response
 
+def checktimestampradius(time1, time2, radius):
+    format = "%Y-%m-%d %H:%M:%S"
+    
+    time1 = datetime.strptime(time1, format)
+    time2 = datetime.strptime(time2, format)
+
+    if time1 > time2:
+        if time1 - time2 >= radius:
+            return True
+        else:
+            return False
+    else:
+        if time2 - time1 >= radius:
+            return True
+        else:
+            return False
+
 @app.route("/players/getsnapshots", methods=['POST'])
 def getsnapshot():
     reqjson = request.json
@@ -91,17 +109,22 @@ def getsnapshot():
         return [response]
     
     snapshots = sql.getallsnapshots()
+
     if reqjson.get('uuid'):
         snapshots = sql.getsnapshots(reqjson['uuid'])
     
-    if reqjson.get('timestamps'):
+    if reqjson.get('timestamp'):
         newsnapshots = []
-        timestamps = reqjson['timestamps']
-        for timestamp in timestamps:
-            for snapshot in snapshots:
-                snapshotdata = sql.getsnapshotfromid(snapshot[0])
-                if snapshotdata[7] == timestamp:
-                    newsnapshots.append(snapshotdata)
+        timestamp = reqjson['timestamp']
+        
+        if reqjson.get('timeradius'):
+            timeradius = reqjson['timeradius']
+        else:
+            timeradius = 3
+        
+        for snapshot in snapshots:
+            if checktimestampradius(timestamp, snapshot[7], timeradius):
+                newsnapshots.append(snapshot)
         
         snapshots = newsnapshots
 
