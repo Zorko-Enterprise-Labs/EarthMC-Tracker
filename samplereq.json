@@ -1,0 +1,7 @@
+localhost:5000/players/takesnapshot
+
+{
+	"apikey" : "h6XaWufZmO8Tu5whFVCctg",
+	"action": "track",
+	"uuid": "36b4f689cac04a11a52b9c4da432e3bc"
+}

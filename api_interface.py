@@ -1,3 +1,4 @@
+import uuid
 import requests
 import json
 
@@ -17,23 +18,15 @@ def findplayer(uuid, coordslist):
         if coord['uuid'] == uuid:
             return coord
 
-def convertcoord(coord):
+def convertcoord(coord, isOnline : bool):
     return {
         "uuid": coord['uuid'],
         "x": coord['x'],
         "y": coord['y'],
         "z": coord['z'],
-        "yaw": coord['yaw']
+        "yaw": coord['yaw'],
+        "isOnline": isOnline
     }
-
-def easyfindplayer(uuid):
-    req = getcoords()
-    coords = findplayer(uuid, req)
-    
-    if not coords:
-        return None
-
-    return convertcoord(coords)
 
 def checkonline(uuid : str):
     reqjson = '{"query": ["' + uuid + '"]}'
@@ -56,4 +49,46 @@ def getuuid(username : str):
     if not response:
         return None
 
-    return response['id']
+    return str(uuid.UUID(hex=response['id']))
+
+def getallcoords():
+    playerlist = getcoords()
+    result = []
+    for player in playerlist:
+        result.append(convertcoord(player))
+    return result
+
+def getonlineplayers():
+    url = f"{apiurl}/online"
+    response = requests.get(url).content
+    return json.loads(response)['players']
+
+def checkonline(uuid : str):
+    url = f"{apiurl}/players"
+    reqjson = {
+        "query" : [uuid]
+    }
+    response = json.loads(requests.post(url, json=reqjson).content)
+    if response:
+        return response[0]['status']['isOnline']
+    else:
+        return False
+
+def easyfindplayer(uuid):
+    req = getcoords()
+    coords = findplayer(uuid, req)
+    isOnline = checkonline(uuid)
+
+    if not coords:
+        return convertcoord({
+            "uuid" : uuid,
+            "x" : None,
+            "y" : None,
+            "z" : None,
+            "yaw" : None
+        },
+            isOnline
+        )
+
+    return convertcoord(coords, isOnline)
+print(easyfindplayer(getuuid("cautionarytale08")))

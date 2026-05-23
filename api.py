@@ -20,8 +20,8 @@ def snapshot():
             coords = api_interface.easyfindplayer(uuid)
             if coords == None:
                 return errors.geterror(2)
-
-            sql.addsnapshot(coords['uuid'], coords['x'], coords['y'], coords['z'])
+            
+            sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'])
             snapshotid = sql.getlatestsnapshot(uuid)
             
             response = {
@@ -31,4 +31,5 @@ def snapshot():
             return response
 
     return errors.geterror(1)
+
 app.run(debug=False)

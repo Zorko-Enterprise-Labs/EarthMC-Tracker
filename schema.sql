@@ -5,9 +5,9 @@ CREATE TABLE snapshots (
     ID INTEGER PRIMARY KEY,
     playeronline BOOLEAN,
     uuid TEXT NOT NULL,
-    x INT NOT NULL,
-    y INT NOT NULL,
-    z INT NOT NULL,
+    x INT,
+    y INT,
+    z INT,
     Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

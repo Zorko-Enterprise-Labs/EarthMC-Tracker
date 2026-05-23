@@ -1,6 +1,6 @@
 import sqlite3
 
-filename = "snapshots.db"
+filename = "database.db"
 
 con = sqlite3.connect(filename, check_same_thread=False)
 cur = con.cursor()
@@ -10,9 +10,9 @@ def initdb():
         with sqlite3.connect(filename) as conn:
             conn.cursor().executescript(schema.read())
 
-def addsnapshot(uuid : str, x : int, y : int, z : int):
-    cur.execute("""INSERT INTO snapshots (uuid, x, y, z) VALUES (?, ?, ?, ?) """,
-        (uuid, x, y, z)    
+def addsnapshot(uuid : str, isOnline : bool, x : int, y : int, z : int):
+    cur.execute("""INSERT INTO snapshots (uuid, playeronline, x, y, z) VALUES (?, ?, ?, ?, ?) """,
+        (uuid, isOnline, x, y, z)    
     )
     
     con.commit()
