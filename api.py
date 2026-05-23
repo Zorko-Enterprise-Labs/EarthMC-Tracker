@@ -32,6 +32,8 @@ def addsnapshot():
 
     return errors.geterror(0)
 
+
+
 @app.route("/players/deletesnapshot", methods=['POST'])
 def deletesnapshot():
     reqjson = request.json
@@ -52,6 +54,8 @@ def deletesnapshot():
         'deleted' : 'true'
     }
     return response
+
+
 
 def formatgetresponse(snapshot, isOnline):
     response = {
@@ -84,8 +88,31 @@ def getsnapshot():
             isOnline = False
 
         response = formatgetresponse(snapshot, isOnline)
-        # return json.dumps(snapshot)
         return [response]
-    return "hi"
+    
+    snapshots = sql.getallsnapshots()
+    if reqjson.get('uuid'):
+        snapshots = sql.getsnapshots(reqjson['uuid'])
+    
+    if reqjson.get('timestamps'):
+        newsnapshots = []
+        timestamps = reqjson['timestamps']
+        for timestamp in timestamps:
+            for snapshot in snapshots:
+                snapshotdata = sql.getsnapshotfromid(snapshot[0])
+                if snapshotdata[7] == timestamp:
+                    newsnapshots.append(snapshotdata)
+        
+        snapshots = newsnapshots
+
+    if snapshots == []:
+        return []
+    
+    response = []
+    for snapshot in snapshots:
+        snapshotdata = sql.getsnapshotfromid(snapshot[0])
+        response.append(formatgetresponse(snapshotdata, snapshotdata[1]))
+    
+    return response
 
 app.run(debug=False)

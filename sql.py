@@ -53,6 +53,11 @@ def getsnapshotfromid(snapshotid : int):
     else:
         return None
 
+def getallsnapshots():
+    cur.execute("""SELECT * FROM snapshots""")
+
+    return cur.fetchall()
+
 def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
     cur.execute("""INSERT INTO apikeys (createperms, readperms, deleteperms, apikey) VALUES (?,?,?,?)""",
         (createperms, readperms, deleteperms, key)
