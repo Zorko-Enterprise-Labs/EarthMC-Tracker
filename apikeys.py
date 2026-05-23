@@ -2,12 +2,7 @@ import secrets
 import sql
 
 def gentoken():
-    token = ""
-    while True:
-        token = secrets.token_urlsafe(16)
-        if not sql.checkkeyexists(token):
-            break
-    return token
+    return secrets.token_urlsafe(16)
 
 def addtoken(createperms : bool, readperms : bool):
     token = gentoken()
@@ -16,14 +11,8 @@ def addtoken(createperms : bool, readperms : bool):
 
 def checkcreateperms(key):
     keyid = sql.getkeyid(key)
-    if not keyid:
-        return False
+    return sql.getkey(keyid)
 
-    return sql.getkey(keyid[0][0])
-    
 def checkreadpems(key):
     keyid = sql.getkeyid(key)
-    if not keyid:
-        return False
-
-    return sql.getkey(keyid[0][0])
+    return sql.getkey(keyid)

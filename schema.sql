@@ -3,7 +3,6 @@ DROP TABLE IF EXISTS apikeys;
 
 CREATE TABLE snapshots (
     ID INTEGER PRIMARY KEY,
-    playeronline BOOLEAN,
     uuid TEXT NOT NULL,
     x INT NOT NULL,
     y INT NOT NULL,

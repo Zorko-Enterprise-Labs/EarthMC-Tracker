@@ -72,11 +72,6 @@ def getkey(id : int):
 
     return cur.fetchall()
 
-def checkkeyexists(apikey : str):
-    if not getkeyid(apikey):
-        return False
-    return True 
-
 def getkeyid(key : str):
     cur.execute("""SELECT ID FROM apikeys WHERE apikey = ? ORDER BY ID DESC""",
         (key,)
