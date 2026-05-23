@@ -8,6 +8,7 @@ CREATE TABLE snapshots (
     x INT,
     y INT,
     z INT,
+    yaw INT,
     Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -15,6 +16,7 @@ CREATE TABLE apikeys (
     ID INTEGER PRIMARY KEY,
     createperms BOOLEAN NOT NULL,
     readperms BOOLEAN NOT NULL,
+    deleteperms BOOLEAN NOT NULL,
     apikey TEXT NOT NULL,
     Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )

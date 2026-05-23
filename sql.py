@@ -10,9 +10,9 @@ def initdb():
         with sqlite3.connect(filename) as conn:
             conn.cursor().executescript(schema.read())
 
-def addsnapshot(uuid : str, isOnline : bool, x : int, y : int, z : int):
-    cur.execute("""INSERT INTO snapshots (uuid, playeronline, x, y, z) VALUES (?, ?, ?, ?, ?) """,
-        (uuid, isOnline, x, y, z)    
+def addsnapshot(uuid : str, isOnline : bool, x : int, y : int, z : int, yaw : int):
+    cur.execute("""INSERT INTO snapshots (uuid, playeronline, x, y, z, yaw) VALUES (?, ?, ?, ?, ?, ?) """,
+        (uuid, isOnline, x, y, z, yaw)    
     )
     
     con.commit()
@@ -53,9 +53,9 @@ def getsnapshotfromid(snapshotid : int):
     else:
         return None
 
-def insertkey(key : str, createperms : bool, readperms : bool):
-    cur.execute("""INSERT INTO apikeys (createperms, readperms, apikey) VALUES (?,?,?)""",
-        (createperms, readperms, key)
+def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
+    cur.execute("""INSERT INTO apikeys (createperms, readperms, deleteperms, apikey) VALUES (?,?,?,?)""",
+        (createperms, readperms, deleteperms, key)
     )
     con.commit()
 

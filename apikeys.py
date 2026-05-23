@@ -9,21 +9,34 @@ def gentoken():
             break
     return token
 
-def addtoken(createperms : bool, readperms : bool):
+def addkey(createperms : bool, readperms : bool, deleteperms : bool):
     token = gentoken()
-    sql.insertkey(token, createperms, readperms)
+    sql.insertkey(token, createperms, readperms, deleteperms)
     return token
 
-def checkcreateperms(key):
+def getkey(key):
     keyid = sql.getkeyid(key)
     if not keyid:
         return False
+    return sql.getkey(keyid[0][0])[0]
 
-    return sql.getkey(keyid[0][0])
+def checkcreateperms(apikey):
+    key = getkey(apikey)
+    if key[1] == 1:
+        return True
+    else:
+        return False
     
-def checkreadpems(key):
-    keyid = sql.getkeyid(key)
-    if not keyid:
+def checkreadperms(apikey):
+    key = getkey(apikey)
+    if key[2] == 1:
+        return True
+    else:
         return False
 
-    return sql.getkey(keyid[0][0])
+def checkdeleteperms(apikey):
+    key = getkey(apikey)
+    if key[3] == 1:
+        return True
+    else:
+        return False

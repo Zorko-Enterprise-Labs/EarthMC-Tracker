@@ -7,7 +7,7 @@ import errors
 app = Flask("API")
 
 @app.route("/players/takesnapshot", methods=['POST'])
-def snapshot():
+def addsnapshot():
     reqjson = request.json
     if not reqjson:
         return None
@@ -21,7 +21,7 @@ def snapshot():
             
             print(coords)
             
-            sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'])
+            sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'], coords['yaw'])
             snapshotid = sql.getlatestsnapshot(uuid)
             
             response = {
@@ -32,4 +32,11 @@ def snapshot():
 
     return errors.geterror(1)
 
+# @app.route("/players/deletesnapshot", methods=['POST'])
+# def deletesnapshot():
+#     reqjson = request.json
+#     if not reqjson:
+#         return None
+    
+#     # if apikeys.c
 app.run(debug=False)
