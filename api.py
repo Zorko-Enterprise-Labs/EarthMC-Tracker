@@ -1,3 +1,4 @@
+import json
 from flask import Flask, url_for, request
 import sql
 import api_interface
@@ -52,12 +53,39 @@ def deletesnapshot():
     }
     return response
 
-# @app.route("/players/getsnapshot", methods=['POST'])
-# def getsnapshot():
-#     reqjson = request.json
-#     if not reqjson:
-#         return errors.geterror(4)
-    
-#     if not apikeys.checkreadperms(reqjson['apikey']):
-#         return errors.geterror(1)
+def formatgetresponse(snapshot, isOnline):
+    response = {
+            'id' : snapshot[0],
+            'isOnline' : isOnline,
+            'uuid' : snapshot[2],
+            'x' : snapshot[3],
+            'y' : snapshot[4],
+            'z' : snapshot[5],
+            'yaw' : snapshot[6],
+            'timestamp' : snapshot[7]
+        }
+    return response
+
+@app.route("/players/getsnapshots", methods=['POST'])
+def getsnapshot():
+    reqjson = request.json
+    if not reqjson:
+        return errors.geterror(4)
+
+    if not apikeys.checkreadperms(reqjson['apikey']):
+        return errors.geterror(1)
+
+    if reqjson.get('id'):
+        snapshot = sql.getsnapshotfromid(reqjson['id'])
+        isOnlineRaw = snapshot[1]
+        if isOnlineRaw:
+            isOnline = True
+        else:
+            isOnline = False
+
+        response = formatgetresponse(snapshot, isOnline)
+        # return json.dumps(snapshot)
+        return [response]
+    return "hi"
+
 app.run(debug=False)
