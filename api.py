@@ -23,11 +23,13 @@ def addsnapshot():
         coords = api_interface.easyfindplayer(uuid, api_interface.getcoordslist())
             
         sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'], coords['yaw'])
-        snapshotid = sql.getlatestsnapshot(uuid)
-            
+        snapshotid = sql.getlatestsnapshot(uuid)[0]
+        snapshot = sql.getsnapshotfromid(snapshotid)    
+        
         response = {
             'response' : coords,
-            'databaseid' : snapshotid
+            'databaseid' : snapshotid,
+            'timestamp' : snapshot[7]
         }
         return response
 
@@ -72,21 +74,16 @@ def formatgetresponse(snapshot, isOnline):
     return response
 
 def checktimestampradius(time1, time2, radius):
-    format = "%Y-%m-%d %H:%M:%S"
-    
-    time1 = datetime.strptime(time1, format)
-    time2 = datetime.strptime(time2, format)
-
     if time1 > time2:
-        if time1 - time2 >= radius:
+        if time1 - time2 <= radius:
             return True
         else:
             return False
     else:
-        if time2 - time1 >= radius:
+        if time2 - time1 <= radius:
             return True
         else:
-            return False
+            return False 
 
 @app.route("/players/getsnapshots", methods=['POST'])
 def getsnapshot():
@@ -127,6 +124,8 @@ def getsnapshot():
                 newsnapshots.append(snapshot)
         
         snapshots = newsnapshots
+
+    # REMEMBER TO ADD COORDINATE RADIUS THING
 
     if snapshots == []:
         return []

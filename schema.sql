@@ -9,7 +9,7 @@ CREATE TABLE snapshots (
     y INT,
     z INT,
     yaw INT,
-    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 
 CREATE TABLE apikeys (
@@ -18,5 +18,5 @@ CREATE TABLE apikeys (
     readperms BOOLEAN NOT NULL,
     deleteperms BOOLEAN NOT NULL,
     apikey TEXT NOT NULL,
-    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 )
