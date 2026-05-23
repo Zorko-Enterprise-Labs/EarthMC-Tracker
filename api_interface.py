@@ -1,6 +1,7 @@
 import uuid
 import requests
 import json
+import hashlib
 
 apikey = open('key.txt').read()
 mojangusernameapi = 'https://api.mojang.com/users/profiles/minecraft/'
@@ -40,6 +41,9 @@ def checkonline(uuid : str):
 
     return status['isOnline']
 
+def correctuuid(incorrectuuid):
+    return str(uuid.UUID(hex=incorrectuuid))
+
 def getuuid(username : str):
     url = mojangusernameapi + username
     response = json.loads(requests.get(url).content)
@@ -49,7 +53,7 @@ def getuuid(username : str):
     if not response:
         return None
 
-    return str(uuid.UUID(hex=response['id']))
+    return response['id']
 
 def getallcoords():
     playerlist = getcoords()
@@ -75,13 +79,14 @@ def checkonline(uuid : str):
         return False
 
 def easyfindplayer(uuid):
+    safeuuid = correctuuid(uuid)
     req = getcoords()
-    coords = findplayer(uuid, req)
-    isOnline = checkonline(uuid)
+    coords = findplayer(safeuuid, req)
+    isOnline = checkonline(safeuuid)
 
     if not coords:
         return convertcoord({
-            "uuid" : uuid,
+            "uuid" : safeuuid,
             "x" : None,
             "y" : None,
             "z" : None,
@@ -91,4 +96,3 @@ def easyfindplayer(uuid):
         )
 
     return convertcoord(coords, isOnline)
-print(easyfindplayer(getuuid("cautionarytale08")))

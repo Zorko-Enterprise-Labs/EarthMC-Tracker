@@ -18,8 +18,8 @@ def snapshot():
             uuid = reqjson['uuid']
 
             coords = api_interface.easyfindplayer(uuid)
-            if coords == None:
-                return errors.geterror(2)
+            
+            print(coords)
             
             sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'])
             snapshotid = sql.getlatestsnapshot(uuid)
