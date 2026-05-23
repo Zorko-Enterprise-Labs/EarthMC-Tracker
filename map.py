@@ -1,51 +1,65 @@
 import requests
 import math
 import os
+import time
 
+# --- Configuration ---
+# Minecraft coordinate bounds
+MIN_X = -64702
+MAX_X = 64702
+MIN_Z = -32275
+MAX_Z = 32275
 
-ZOOM_LEVEL = 3
-OUTPUT_DIR = f"tiles/minecraft_overworld/{ZOOM_LEVEL}"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# The zoom levels we want to download. 
+# Leaflet map uses Zoom 0 (furthest out) to Zoom 5 (max zoom).
+ZOOM_LEVELS = [0, 1, 2, 3, 4, 5]
 
-MIN_X_BLOCK = -64702
-MAX_X_BLOCK = 64702
-MIN_Z_BLOCK = -32275
-MAX_Z_BLOCK = 32275
+def download_all_tiles():
+    session = requests.Session()
+    session.headers.update({"User-Agent": "Mozilla/5.0"})
 
-TILE_SIZE_PX = 512
-BLOCKS_PER_PIXEL = 2 ** (5 - ZOOM_LEVEL)
-BLOCKS_PER_TILE = TILE_SIZE_PX * BLOCKS_PER_PIXEL
+    for zoom in ZOOM_LEVELS:
+        print(f"\n--- Downloading Zoom Level {zoom} ---")
+        out_dir = f"tiles/minecraft_overworld/{zoom}"
+        os.makedirs(out_dir, exist_ok=True)
+    
+        # Calculate grid size for this specific zoom
+        blocks_per_pixel = 2 ** (5 - zoom)
+        blocks_per_tile = 512 * blocks_per_pixel
+        
+        min_tx = math.floor(MIN_X / blocks_per_tile)
+        max_tx = math.floor(MAX_X / blocks_per_tile)
+        min_tz = math.floor(MIN_Z / blocks_per_tile)
+        max_tz = math.floor(MAX_Z / blocks_per_tile)
+        
+        total_tiles = (max_tx - min_tx + 1) * (max_tz - min_tz + 1)
+        print(f"Total grid tiles to check for zoom {zoom}: {total_tiles}")
+        
+        count = 0
+        for tz in range(min_tz, max_tz + 1):
+            for tx in range(min_tx, max_tx + 1):
+                count += 1
+                tile_url = f"https://map.earthmc.net/tiles/minecraft_overworld/{zoom}/{tx}_{tz}.png"
+                file_path = os.path.join(out_dir, f"{tx}_{tz}.png")
+                
+                # Skip if already downloaded
+                if os.path.exists(file_path):
+                    # print(f"[{count}/{total_tiles}] Zoom {zoom} Tile {tx}_{tz} already exists, skipping")
+                    continue
+                    
+                res = session.get(tile_url)
+                
+                if res.status_code == 200:
+                    with open(file_path, 'wb') as f:
+                        f.write(res.content)
+                    print(f"[{count}/{total_tiles}] Downloaded {tx}_{tz}.png")
+                # else:
+                #     pass # Silenced to prevent terminal spam when tiles are empty (ocean)
+                
+                # Tiny sleep to ensure you don't get IP banned
+                time.sleep(0.1)
 
-min_tile_x = math.floor(MIN_X_BLOCK / BLOCKS_PER_TILE)
-max_tile_x = math.floor(MAX_X_BLOCK / BLOCKS_PER_TILE)
-min_tile_z = math.floor(MIN_Z_BLOCK / BLOCKS_PER_TILE)
-max_tile_z = math.floor(MAX_Z_BLOCK / BLOCKS_PER_TILE)
+    print("\nDone downloading all tiles!")
 
-print(f"Blocks per Tile: {BLOCKS_PER_TILE} x {BLOCKS_PER_TILE}")
-print(f"Required Tile X range: {min_tile_x} to {max_tile_x}")
-print(f"Required Tile Z range: {min_tile_z} to {max_tile_z}")
-
-width_tiles = max_tile_x - min_tile_x + 1
-height_tiles = max_tile_z - min_tile_z + 1
-print(f"Total tiles to download: {width_tiles * height_tiles}")
-
-headers = {"User-Agent": "Mozilla/5.0"}
-session = requests.Session()
-
-for tz in range(min_tile_z, max_tile_z + 1):
-    for tx in range(min_tile_x, max_tile_x + 1):
-        tile_url = f"https://map.earthmc.net/tiles/minecraft_overworld/{ZOOM_LEVEL}/{tx}_{tz}.png"
-        file_path = os.path.join(OUTPUT_DIR, f"{tx}_{tz}.png")
-        if os.path.exists(file_path):
-            print(f"Tile {tx}_{tz} already exists, skipping")
-            continue
-        res = session.get(tile_url, headers=headers)
-        if res.status_code == 200:
-            with open(file_path, 'wb') as f:
-                f.write(res.content)
-            print(f"Downloaded tile {tx}_{tz}")
-        else:
-            print(f"Tile {tx}_{tz} not found (empty ocean)")
-
-print("Done downloading all tiles!")
-
+if __name__ == "__main__":
+    download_all_tiles()

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EarthMC Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
+        #map { width: 100vw; height: 100vh; background: #1a1a1a; }
+        #loading-banner {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #ffcc00;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 9999;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-banner">Please wait while map images are downloading in the background...</div>
+    <div id="map"></div>
+    <script>
+        // Create the map using CRS.Simple (flat 2D plane instead of a globe)
+        var map = L.map('map', {
+            crs: L.CRS.Simple,
+            center: [0, 0],
+            zoom: 1,
+            minZoom: 0,
+            maxZoom: 5
+        });
+
+        // Extend Leaflet's TileLayer to match the Squaremap file naming convention
+        /* 
+           Leaflet normally requests tiles using {z}/{x}/{y}.png
+           Squaremap saves them as {z}/{x}_{z}.png 
+        */
+        L.TileLayer.Squaremap = L.TileLayer.extend({
+            getTileUrl: function(coords) {
+                // Ensure we request the correct zoom level and format
+                var zoom = this._getZoomForUrl();
+                return 'tiles/minecraft_overworld/' + zoom + '/' + coords.x + '_' + coords.y + '.png';
+            }
+        });
+
+        // Initialize the custom layer
+        var earthmcLayer = new L.TileLayer.Squaremap('', {
+            tileSize: 512, // Squaremap uses 512x512 tiles
+            minNativeZoom: 0,
+            maxNativeZoom: 5,
+            noWrap: true, // Don't wrap the map around like a globe
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' // Empty transparent pixel for missing tiles (ocean)
+        });
+
+        earthmcLayer.addTo(map);
+
+        // Center map properly based on your default downloaded view
+        map.setView([0, 0], 1);
+
+        // Check the server status to see if tiles are actively downloading
+        function checkDownloadStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    const banner = document.getElementById('loading-banner');
+                    if (data.downloading) {
+                        banner.style.display = 'block';
+                        // Recheck in 3 seconds
+                        setTimeout(checkDownloadStatus, 3000);
+                    } else {
+                        banner.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    // Try again in case server temporarily lagged
+                    setTimeout(checkDownloadStatus, 5000);
+                });
+        }
+        
+        // Start watching the status
+        checkDownloadStatus();
+    </script>
+</body>
+</html>
