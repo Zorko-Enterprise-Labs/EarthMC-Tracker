@@ -19,11 +19,10 @@ def checkcreateperms(key):
     if not keyid:
         return False
 
-    return sql.getkey(keyid[0][0])]
-
+    return sql.getkey(keyid[0][0])
 def checkreadpems(key):
     keyid = sql.getkeyid(key)
-    return sql.getkey(keyid)
+    if not keyid:
+        return False
 
-# print(addtoken(True, True))
-print(checkcreateperms("QbjuZignEsdOoi78gDLY3Q"))
+    return sql.getkey(keyid[0][0])
