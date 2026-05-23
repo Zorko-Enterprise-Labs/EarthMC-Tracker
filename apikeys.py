@@ -22,21 +22,27 @@ def getkey(key):
 
 def checkcreateperms(apikey):
     key = getkey(apikey)
-    if key[1] == 1:
+    if not key:
+        return False
+    if key[1]:
         return True
     else:
         return False
     
 def checkreadperms(apikey):
     key = getkey(apikey)
-    if key[2] == 1:
+    if not key:
+        return False
+    if key[2]:
         return True
     else:
         return False
 
 def checkdeleteperms(apikey):
     key = getkey(apikey)
-    if key[3] == 1:
+    if not key:
+        return False
+    if key[3]:
         return True
     else:
         return False
