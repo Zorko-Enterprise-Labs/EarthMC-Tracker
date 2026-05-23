@@ -10,7 +10,7 @@ app = Flask("API")
 def addsnapshot():
     reqjson = request.json
     if not reqjson:
-        return None
+        return errors.geterror(4)
     
     if not apikeys.checkcreateperms(reqjson['apikey']):
         return errors.geterror(1)
@@ -35,7 +35,7 @@ def addsnapshot():
 def deletesnapshot():
     reqjson = request.json
     if not reqjson:
-        return None
+        return errors.geterror(4)
     
     if not apikeys.checkdeleteperms(reqjson['apikey']):
         return errors.geterror(1)
@@ -51,4 +51,13 @@ def deletesnapshot():
         'deleted' : 'true'
     }
     return response
+
+# @app.route("/players/getsnapshot", methods=['POST'])
+# def getsnapshot():
+#     reqjson = request.json
+#     if not reqjson:
+#         return errors.geterror(4)
+    
+#     if not apikeys.checkreadperms(reqjson['apikey']):
+#         return errors.geterror(1)
 app.run(debug=False)

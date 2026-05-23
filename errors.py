@@ -14,4 +14,6 @@ def geterror(error : int):
         return builderror("Unknown action", 2)
     if error == 3:
         return builderror("Snapshot does not exist", 3)
+    if error == 4:
+        return builderror("Request has no JSON content")
     return builderror("Unknown error")
