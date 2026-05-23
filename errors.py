@@ -1,14 +1,17 @@
 import json
 
-def builderror(text):
+def builderror(text, errorcode):
     errordict = {
-        'error' : text
+        'error' : text,
+        'errorcode' : errorcode
     }
     return json.dumps(errordict)
 
 def geterror(error : int):
     if error == 1:
-        return builderror("Insufficient permissions")
+        return builderror("Insufficient permissions", 1)
     if error == 2:
-        return builderror("No such player is visible on the map")
+        return builderror("Unknown action", 2)
+    if error == 3:
+        return builderror("Snapshot does not exist", 3)
     return builderror("Unknown error")

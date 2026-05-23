@@ -12,31 +12,43 @@ def addsnapshot():
     if not reqjson:
         return None
     
-    if apikeys.checkcreateperms(reqjson['apikey']):
-        action = reqjson['action']
-        if action == "track":
-            uuid = reqjson['uuid']
-
-            coords = api_interface.easyfindplayer(uuid, api_interface.getcoordslist())
-            
-            print(coords)
-            
-            sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'], coords['yaw'])
-            snapshotid = sql.getlatestsnapshot(uuid)
-            
-            response = {
-                'response' : coords,
-                'databaseid' : snapshotid
-            }
-            return response
-
-    return errors.geterror(1)
-
-# @app.route("/players/deletesnapshot", methods=['POST'])
-# def deletesnapshot():
-#     reqjson = request.json
-#     if not reqjson:
-#         return None
+    if not apikeys.checkcreateperms(reqjson['apikey']):
+        return errors.geterror(1)
     
-#     # if apikeys.c
+    action = reqjson['action']
+    if action == "track":
+        uuid = reqjson['uuid']
+        coords = api_interface.easyfindplayer(uuid, api_interface.getcoordslist())
+            
+        sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'], coords['yaw'])
+        snapshotid = sql.getlatestsnapshot(uuid)
+            
+        response = {
+            'response' : coords,
+            'databaseid' : snapshotid
+        }
+        return response
+
+    return errors.geterror(0)
+
+@app.route("/players/deletesnapshot", methods=['POST'])
+def deletesnapshot():
+    reqjson = request.json
+    if not reqjson:
+        return None
+    
+    if not apikeys.checkdeleteperms(reqjson['apikey']):
+        return errors.geterror(1)
+
+    todelete = int(reqjson['snapshotid'])
+
+    if not sql.getkey(todelete):
+        return errors.geterror(3)
+
+    sql.deletesnapshot(todelete)
+
+    response = {
+        'deleted' : 'true'
+    }
+    return response
 app.run(debug=False)
