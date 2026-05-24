@@ -2,17 +2,47 @@ import secrets
 import sql
 
 def gentoken():
-    return secrets.token_urlsafe(16)
-
-def addtoken(createperms : bool, readperms : bool):
-    token = gentoken()
-    sql.insertkey(token, createperms, readperms)
+    token = ""
+    while True:
+        token = secrets.token_urlsafe(16)
+        if not sql.checkkeyexists(token):
+            break
     return token
 
-def checkcreateperms(key):
-    keyid = sql.getkeyid(key)
-    return sql.getkey(keyid)
+def addkey(createperms : bool, readperms : bool, deleteperms : bool):
+    token = gentoken()
+    sql.insertkey(token, createperms, readperms, deleteperms)
+    return token
 
-def checkreadpems(key):
+def getkey(key):
     keyid = sql.getkeyid(key)
-    return sql.getkey(keyid)
+    if not keyid:
+        return False
+    return sql.getkey(keyid[0][0])[0]
+
+def checkcreateperms(apikey):
+    key = getkey(apikey)
+    if not key:
+        return False
+    if key[1]:
+        return True
+    else:
+        return False
+    
+def checkreadperms(apikey):
+    key = getkey(apikey)
+    if not key:
+        return False
+    if key[2]:
+        return True
+    else:
+        return False
+
+def checkdeleteperms(apikey):
+    key = getkey(apikey)
+    if not key:
+        return False
+    if key[3]:
+        return True
+    else:
+        return False
