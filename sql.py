@@ -71,14 +71,17 @@ with con:
             (snapshotid,)
         )
         con.commit()
-    
-    def getsnapshottimeradius(timestamp : int, timeradius : int):
-        cur.execute("""SELECT * FROM mapsnapshots""")
-        if not cur.fetchall():
-            return None
-        result = cur.fetchall()
+
+    def getallmapsnapshots():
+        cur.execute("""SELECT * FROM mapsnapshots ORDER BY ID DESC""")
         return cur.fetchall()
 
+    def getmapsnapshottimeradius(timestamp : int, timeradius : int):
+        mapsnapshots = getallmapsnapshots()
+        # if not cur.fetchall():
+            # return None
+        result = cur.fetchall()
+        return cur.fetchall()
 
     def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
         cur.execute("""INSERT INTO apikeys (createperms, readperms, deleteperms, apikey) VALUES (?,?,?,?)""",
@@ -110,4 +113,3 @@ with con:
         )
 
         return cur.fetchall()
-print(getsnapshottimeradius(1779644791, 100))
