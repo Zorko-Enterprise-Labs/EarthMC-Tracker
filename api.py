@@ -8,6 +8,16 @@ from datetime import datetime, timedelta
 
 app = Flask("API")
 
+# Options
+# Options
+# Options
+
+default_zoom_levels = [1,2,3,4]
+
+# Players API
+# Players API
+# Players API
+
 @app.route("/players/takesnapshot", methods=['POST'])
 def addsnapshot():
     reqjson = request.json
@@ -159,4 +169,24 @@ def getsnapshot():
     
     return response
 
+# Map API
+# Map API
+# Map API
+
+@app.route("/map/createsnapshot", methods=['POST'])
+def createmapsnapshot():
+    reqjson = request.json
+    if not reqjson:
+        return errors.geterror(4)
+    
+    if not apikeys.checkcreateperms(reqjson['apikey']):
+        return errors.geterror(1)
+
+    zoomlevels = default_zoom_levels
+    if reqjson.get('zoomlevels'):
+        zoomlevels = reqjson['zoomlevels']
+
+    return "i would call map.py here"
+
+    return errors.geterror(0)
 app.run(debug=False)

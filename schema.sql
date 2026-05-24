@@ -1,5 +1,24 @@
+DROP TABLE IF EXISTS mapsnapshots;
+DROP TABLE IF EXISTS territorysnapshots;
 DROP TABLE IF EXISTS snapshots;
 DROP TABLE IF EXISTS apikeys;
+
+CREATE TABLE mapsnapshots (
+    ID INTEGER PRIMARY KEY,
+    folderpath TEXT NOT NULL,
+    completed BOOLEAN NOT NULL,
+    Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE TABLE territorysnapshots (
+    ID INTEGER PRIMARY KEY,
+    townname TEXT NOT NULL,
+    nation TEXT NOT NULL,
+    townboard TEXT NOT NULL,
+    iscapital BOOLEAN NOT NULL,
+    mapcolour TEXT NOT NULL,
+    Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
 
 CREATE TABLE snapshots (
     ID INTEGER PRIMARY KEY,
@@ -19,4 +38,4 @@ CREATE TABLE apikeys (
     deleteperms BOOLEAN NOT NULL,
     apikey TEXT NOT NULL,
     Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
-)
+);
