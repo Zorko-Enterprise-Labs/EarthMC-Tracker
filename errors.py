@@ -15,5 +15,7 @@ def geterror(error : int):
     if error == 3:
         return builderror("Snapshot does not exist", 3)
     if error == 4:
-        return builderror("Request has no JSON content")
+        return builderror("Request has no JSON content", 4)
+    if error == 5:
+        return builderror("No snapshots were provided for deletion", 5)
     return builderror("Unknown error")

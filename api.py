@@ -64,11 +64,15 @@ def deletesnapshot():
         return errors.geterror(1)
 
     todelete = reqjson['snapshotids']
+
+    if not todelete:
+        return errors.geterror(5)
+
     for id in todelete:
         if not id:
+            return error.geterror(3)
+        if not sql.getsnapshotfromid(id):
             return errors.geterror(3)
-        # if not sql.getkey(id):
-        #     return errors.geterror(3)
         sql.deletesnapshot(id)
 
     response = {
