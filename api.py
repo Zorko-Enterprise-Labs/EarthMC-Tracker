@@ -1,7 +1,7 @@
 import json
 from flask import Flask, url_for, request
 import sql
-import api_interface
+import players.api_interface as api_interface
 import apikeys
 import errors
 from datetime import datetime, timedelta

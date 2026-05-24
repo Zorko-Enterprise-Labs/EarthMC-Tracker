@@ -3,7 +3,7 @@ import requests
 import json
 import hashlib
 
-apikey = open('key.txt').read()
+# apikey = open('key.txt').read()
 mojangusernameapi = 'https://api.mojang.com/users/profiles/minecraft/'
 mojanguuidapi = 'https://api.mojang.com/user/profiles/'
 
