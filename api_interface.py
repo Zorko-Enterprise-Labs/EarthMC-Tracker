@@ -55,13 +55,6 @@ def getuuid(username : str):
 
     return response['id']
 
-def getallcoords():
-    playerlist = getcoords()
-    result = []
-    for player in playerlist:
-        result.append(convertcoord(player))
-    return result
-
 def getonlineplayers():
     url = f"{apiurl}/online"
     response = requests.get(url).content
@@ -78,15 +71,9 @@ def checkonline(uuid : str):
     else:
         return False
 
-def easyfindplayer(uuid, coordslist):
-    safeuuid = correctuuid(uuid)
-    coords = findplayer(uuid, coordslist)
-    print(coords)
-    isOnline = checkonline(safeuuid)
-
-    if not coords:
-        return convertcoord({
-            "uuid" : safeuuid,
+def getdummycoords(uuid, isOnline):
+    return convertcoord({
+            "uuid" : uuid,
             "x" : None,
             "y" : None,
             "z" : None,
@@ -95,4 +82,31 @@ def easyfindplayer(uuid, coordslist):
             isOnline
         )
 
+def easyfindplayer(uuid, coordslist):
+    safeuuid = correctuuid(uuid)
+    coords = findplayer(uuid, coordslist)
+    print(coords)
+    isOnline = checkonline(safeuuid)
+
+    if not coords:
+        return getdummycoords(safeuuid, isOnline)
+
     return convertcoord(coords, isOnline)
+
+def getallcoords(coordslist, onlinelist):
+    result = []
+    for player in onlinelist:
+        uuid = player['uuid']
+        safeuuid = correctuuid(uuid)
+        coords = findplayer(uuid, coordslist)
+        isOnline = True
+
+        if not coords:
+            return getdummycoords(safeuuid, isOnline)
+
+        result.append(convertcoord(coords, isOnline))
+        # return result
+    return result
+
+# print(getallcoords(getcoordslist(), getonlineplayers()))
+# print(easyfindplayer("d06088f7-16af-4099-a07b-e58cee333b38", getcoordslist()))
