@@ -41,8 +41,11 @@ def checkonline(uuid : str):
 
     return status['isOnline']
 
-def correctuuid(incorrectuuid):
+def correctuuid(incorrectuuid : str):
     return str(uuid.UUID(hex=incorrectuuid))
+
+def removeuuiddashes(incorrectuuid : str):
+    return str(uuid.UUID(incorrectuuid).hex)
 
 def getuuid(username : str):
     url = mojangusernameapi + username
@@ -96,17 +99,11 @@ def easyfindplayer(uuid, coordslist):
 def getallcoords(coordslist, onlinelist):
     result = []
     for player in onlinelist:
-        uuid = player['uuid']
-        safeuuid = correctuuid(uuid)
+        uuid = removeuuiddashes(player['uuid'])
         coords = findplayer(uuid, coordslist)
-        isOnline = True
 
         if not coords:
-            return getdummycoords(safeuuid, isOnline)
-
-        result.append(convertcoord(coords, isOnline))
-        # return result
+            result.append(getdummycoords(uuid, True))
+        else:
+            result.append(convertcoord(coords,True))
     return result
-
-# print(getallcoords(getcoordslist(), getonlineplayers()))
-# print(easyfindplayer("d06088f7-16af-4099-a07b-e58cee333b38", getcoordslist()))

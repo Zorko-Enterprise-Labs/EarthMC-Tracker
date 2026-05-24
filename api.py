@@ -32,6 +32,22 @@ def addsnapshot():
             'timestamp' : snapshot[7]
         }
         return response
+    if action == "fullsnapshot":
+        coords = api_interface.getallcoords(api_interface.getcoordslist(), api_interface.getonlineplayers())
+        response = []
+        for coord in coords:
+            uuid = coord['uuid']
+            sql.addsnapshot(coord['uuid'], coord['isOnline'], coord['x'], coord['y'], coord['z'], coord['yaw'])
+            snapshotid = sql.getlatestsnapshot(uuid)[0]
+            snapshot = sql.getsnapshotfromid(snapshotid)
+
+            playerentry = {
+                'reponse' : coords,
+                'databaseid' : snapshotid,
+                'timestamp' : snapshot[7]
+            }
+            response.append(playerentry)
+        return response
 
     return errors.geterror(0)
 

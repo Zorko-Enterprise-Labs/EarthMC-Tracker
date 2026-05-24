@@ -5,86 +5,87 @@ filename = "database.db"
 con = sqlite3.connect(filename, check_same_thread=False)
 cur = con.cursor()
 
-def initdb():
-    with open('schema.sql') as schema:
-        with sqlite3.connect(filename) as conn:
-            conn.cursor().executescript(schema.read())
+with con:
+    def initdb():
+        with open('schema.sql') as schema:
+            with sqlite3.connect(filename) as conn:
+                conn.cursor().executescript(schema.read())
 
-def addsnapshot(uuid : str, isOnline : bool, x : int, y : int, z : int, yaw : int):
-    cur.execute("""INSERT INTO snapshots (uuid, playeronline, x, y, z, yaw) VALUES (?, ?, ?, ?, ?, ?) """,
-        (uuid, isOnline, x, y, z, yaw)    
-    )
-    
-    con.commit()
+    def addsnapshot(uuid : str, isOnline : bool, x : int, y : int, z : int, yaw : int):
+        cur.execute("""INSERT INTO snapshots (uuid, playeronline, x, y, z, yaw) VALUES (?, ?, ?, ?, ?, ?) """,
+            (uuid, isOnline, x, y, z, yaw)    
+        )
+        
+        con.commit()
 
-def deletesnapshot(snapshotid : int):
-    cur.execute("""DELETE FROM snapshots WHERE ID = ?""",
-        (snapshotid,)
-    )
-    con.commit()
+    def deletesnapshot(snapshotid : int):
+        cur.execute("""DELETE FROM snapshots WHERE ID = ?""",
+            (snapshotid,)
+        )
+        con.commit()
 
-def getsnapshots(uuid : str):
-    cur.execute("""SELECT ID FROM snapshots WHERE uuid = ? ORDER BY ID DESC""",
-        (uuid,)
-    )
+    def getsnapshots(uuid : str):
+        cur.execute("""SELECT ID FROM snapshots WHERE uuid = ? ORDER BY ID DESC""",
+            (uuid,)
+        )
 
-    result = cur.fetchall()
+        result = cur.fetchall()
 
-    if result != [] and result != None:
-        return result
-    else:
-        return None
+        if result != [] and result != None:
+            return result
+        else:
+            return None
 
-def getlatestsnapshot(uuid : str):
-    snapshots = getsnapshots(uuid)
-    if not snapshots:
-        return None
-    return snapshots[0]
+    def getlatestsnapshot(uuid : str):
+        snapshots = getsnapshots(uuid)
+        if not snapshots:
+            return None
+        return snapshots[0]
 
-def getsnapshotfromid(snapshotid : int):
-    cur.execute("""SELECT * FROM snapshots WHERE ID = ?""",
-        (snapshotid,)
-    )
+    def getsnapshotfromid(snapshotid : int):
+        cur.execute("""SELECT * FROM snapshots WHERE ID = ?""",
+            (snapshotid,)
+        )
 
-    result = cur.fetchall()
+        result = cur.fetchall()
 
-    if result != [] and result != None:
-        return result[0]
-    else:
-        return None
+        if result != [] and result != None:
+            return result[0]
+        else:
+            return None
 
-def getallsnapshots():
-    cur.execute("""SELECT * FROM snapshots""")
+    def getallsnapshots():
+        cur.execute("""SELECT * FROM snapshots""")
 
-    return cur.fetchall()
+        return cur.fetchall()
 
-def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
-    cur.execute("""INSERT INTO apikeys (createperms, readperms, deleteperms, apikey) VALUES (?,?,?,?)""",
-        (createperms, readperms, deleteperms, key)
-    )
-    con.commit()
+    def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
+        cur.execute("""INSERT INTO apikeys (createperms, readperms, deleteperms, apikey) VALUES (?,?,?,?)""",
+            (createperms, readperms, deleteperms, key)
+        )
+        con.commit()
 
-def removekey(id : int):
-    cur.execute("""DELETE FROM apikeys WHERE ID = ?""",
-        (id,)
-    )
-    con.commit()
+    def removekey(id : int):
+        cur.execute("""DELETE FROM apikeys WHERE ID = ?""",
+            (id,)
+        )
+        con.commit()
 
-def getkey(id : int):
-    cur.execute("""SELECT * FROM apikeys WHERE ID = ?""",
-        (id,)
-    )
+    def getkey(id : int):
+        cur.execute("""SELECT * FROM apikeys WHERE ID = ?""",
+            (id,)
+        )
 
-    return cur.fetchall()
+        return cur.fetchall()
 
-def checkkeyexists(apikey : str):
-    if not getkeyid(apikey):
-        return False
-    return True 
+    def checkkeyexists(apikey : str):
+        if not getkeyid(apikey):
+            return False
+        return True 
 
-def getkeyid(key : str):
-    cur.execute("""SELECT ID FROM apikeys WHERE apikey = ? ORDER BY ID DESC""",
-        (key,)
-    )
+    def getkeyid(key : str):
+        cur.execute("""SELECT ID FROM apikeys WHERE apikey = ? ORDER BY ID DESC""",
+            (key,)
+        )
 
-    return cur.fetchall()
+        return cur.fetchall()
