@@ -32,6 +32,7 @@ def addsnapshot():
             'timestamp' : snapshot[7]
         }
         return response
+
     if action == "fullsnapshot":
         coords = api_interface.getallcoords(api_interface.getcoordslist(), api_interface.getonlineplayers())
         response = []
@@ -62,11 +63,13 @@ def deletesnapshot():
     if not apikeys.checkdeleteperms(reqjson['apikey']):
         return errors.geterror(1)
 
-    todelete = reqjson['snapshotid']
+    todelete = reqjson['snapshotids']
     for id in todelete:
-        if not sql.getkey(todelete):
+        if not id:
             return errors.geterror(3)
-        sql.deletesnapshot(todelete)
+        # if not sql.getkey(id):
+        #     return errors.geterror(3)
+        sql.deletesnapshot(id)
 
     response = {
         'deleted' : 'true'
