@@ -10,20 +10,20 @@ MAX_X = 64702
 MIN_Z = -32275
 MAX_Z = 32275
 
-RATELIMIT_PROTECTION = False
+DEFAULT_RATELIMIT_PROTECTION = False
 
 # The zoom levels we want to download. 
 # Leaflet map uses Zoom 0 (furthest out) to Zoom 5 (max zoom).
 # ZOOM_LEVELS = [0, 1, 2, 3, 4, 5]
-ZOOM_LEVELS = [0,1,2,3,4]
+DEFAULT_ZOOM_LEVELS = [0,1,2,3,4]
 
-def download_all_tiles():
+def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION):
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
 
     for zoom in ZOOM_LEVELS:
         print(f"\n--- Downloading Zoom Level {zoom} ---")
-        out_dir = f"tiles/minecraft_overworld/{zoom}"
+        out_dir = f"{output_folder}{zoom}"
         os.makedirs(out_dir, exist_ok=True)
     
         # Calculate grid size for this specific zoom
@@ -66,4 +66,4 @@ def download_all_tiles():
     print("\nDone downloading all tiles!")
 
 if __name__ == "__main__":
-    download_all_tiles()
+    download_all_tiles("test/", ZOOM_LEVELS=[1])

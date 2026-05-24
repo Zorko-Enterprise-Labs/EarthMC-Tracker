@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS mapsnapshots;
 DROP TABLE IF EXISTS territorysnapshots;
 DROP TABLE IF EXISTS snapshots;
-DROP TABLE IF EXISTS apikeys;
+-- DROP TABLE IF EXISTS apikeys;
 
 CREATE TABLE mapsnapshots (
     ID INTEGER PRIMARY KEY,
@@ -12,6 +12,8 @@ CREATE TABLE mapsnapshots (
 
 CREATE TABLE territorysnapshots (
     ID INTEGER PRIMARY KEY,
+    -- POINTS SHOULD BE A JSON ARRAY SAVED AS A STRING
+    points TEXT NOT NULL, 
     townname TEXT NOT NULL,
     nation TEXT NOT NULL,
     townboard TEXT NOT NULL,
@@ -31,11 +33,11 @@ CREATE TABLE snapshots (
     Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 
-CREATE TABLE apikeys (
-    ID INTEGER PRIMARY KEY,
-    createperms BOOLEAN NOT NULL,
-    readperms BOOLEAN NOT NULL,
-    deleteperms BOOLEAN NOT NULL,
-    apikey TEXT NOT NULL,
-    Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
-);
+-- CREATE TABLE apikeys (
+--     ID INTEGER PRIMARY KEY,
+--     createperms BOOLEAN NOT NULL,
+--     readperms BOOLEAN NOT NULL,
+--     deleteperms BOOLEAN NOT NULL,
+--     apikey TEXT NOT NULL,
+--     Timestamp INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+-- );

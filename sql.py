@@ -15,7 +15,6 @@ with con:
         cur.execute("""INSERT INTO snapshots (uuid, playeronline, x, y, z, yaw) VALUES (?, ?, ?, ?, ?, ?) """,
             (uuid, isOnline, x, y, z, yaw)    
         )
-        
         con.commit()
 
     def deletesnapshot(snapshotid : int):
@@ -59,6 +58,28 @@ with con:
 
         return cur.fetchall()
 
+
+
+    def addmapsnapshot(folderpath : str, completed : bool):
+        cur.execute("""INSERT INTO mapsnapshots (folderpath, completed) VALUES (?,?)""",
+            (folderpath, completed)
+        )
+        con.commit()
+
+    def deletemapsnapshot(snapshotid : int):
+        cur.execute("""DELETE FROM mapsnapshots WHERE ID = ?""",
+            (snapshotid,)
+        )
+        con.commit()
+    
+    def getsnapshottimeradius(timestamp : int, timeradius : int):
+        cur.execute("""SELECT * FROM mapsnapshots""")
+        if not cur.fetchall():
+            return None
+        result = cur.fetchall()
+        return cur.fetchall()
+
+
     def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
         cur.execute("""INSERT INTO apikeys (createperms, readperms, deleteperms, apikey) VALUES (?,?,?,?)""",
             (createperms, readperms, deleteperms, key)
@@ -89,3 +110,4 @@ with con:
         )
 
         return cur.fetchall()
+print(getsnapshottimeradius(1779644791, 100))
