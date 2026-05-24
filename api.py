@@ -42,7 +42,7 @@ def addsnapshot():
             snapshot = sql.getsnapshotfromid(snapshotid)
 
             playerentry = {
-                'reponse' : coords,
+                'reponse' : coord,
                 'databaseid' : snapshotid,
                 'timestamp' : snapshot[7]
             }
@@ -62,12 +62,11 @@ def deletesnapshot():
     if not apikeys.checkdeleteperms(reqjson['apikey']):
         return errors.geterror(1)
 
-    todelete = int(reqjson['snapshotid'])
-
-    if not sql.getkey(todelete):
-        return errors.geterror(3)
-
-    sql.deletesnapshot(todelete)
+    todelete = reqjson['snapshotid']
+    for id in todelete:
+        if not sql.getkey(todelete):
+            return errors.geterror(3)
+        sql.deletesnapshot(todelete)
 
     response = {
         'deleted' : 'true'
