@@ -10,9 +10,12 @@ MAX_X = 64702
 MIN_Z = -32275
 MAX_Z = 32275
 
+RATELIMIT_PROTECTION = False
+
 # The zoom levels we want to download. 
 # Leaflet map uses Zoom 0 (furthest out) to Zoom 5 (max zoom).
-ZOOM_LEVELS = [0, 1, 2, 3, 4, 5]
+# ZOOM_LEVELS = [0, 1, 2, 3, 4, 5]
+ZOOM_LEVELS = [0,1,2,3,4]
 
 def download_all_tiles():
     session = requests.Session()
@@ -57,7 +60,8 @@ def download_all_tiles():
                 #     pass # Silenced to prevent terminal spam when tiles are empty (ocean)
                 
                 # Tiny sleep to ensure you don't get IP banned
-                time.sleep(0.1)
+                if RATELIMIT_PROTECTION: 
+                    time.sleep(0.1)
 
     print("\nDone downloading all tiles!")
 
