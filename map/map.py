@@ -2,9 +2,10 @@ import requests
 import math
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- Configuration ----
-# Minecraft coordinate bounds
+# Minecraft coordinate bounds for the whole map:
 MIN_X = -64702
 MAX_X = 64702
 MIN_Z = -32275
@@ -15,9 +16,25 @@ DEFAULT_RATELIMIT_PROTECTION = False
 # The zoom levels we want to download. 
 # Leaflet map uses Zoom 0 (furthest out) to Zoom 5 (max zoom).
 # ZOOM_LEVELS = [0, 1, 2, 3, 4, 5]
-DEFAULT_ZOOM_LEVELS = [0,1,2,3,4]
+DEFAULT_ZOOM_LEVELS = [0,1,2,3,4,5]
 
-def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION):
+def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoom, RATELIMIT_PROTECTION):
+    # Skip if already downloaded
+    if os.path.exists(file_path):
+        return
+        
+    res = session.get(tile_url)
+    
+    if res.status_code == 200:
+        with open(file_path, 'wb') as f:
+            f.write(res.content)
+        print(f"[{count}/{total_tiles}] Downloaded {tx}_{tz}.png (Zoom {zoom})")
+    
+    # Tiny sleep to ensure you don't get IP banned
+    if RATELIMIT_PROTECTION: 
+        time.sleep(0.1)
+
+def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=20):
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
 
@@ -27,6 +44,7 @@ def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT
         os.makedirs(out_dir, exist_ok=True)
     
         # Calculate grid size for this specific zoom
+        # EarthMC uses a squaremap which handles zoom mathematically.
         blocks_per_pixel = 2 ** (5 - zoom)
         blocks_per_tile = 512 * blocks_per_pixel
         
@@ -39,29 +57,20 @@ def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT
         print(f"Total grid tiles to check for zoom {zoom}: {total_tiles}")
         
         count = 0
-        for tz in range(min_tz, max_tz + 1):
-            for tx in range(min_tx, max_tx + 1):
-                count += 1
-                tile_url = f"https://map.earthmc.net/tiles/minecraft_overworld/{zoom}/{tx}_{tz}.png"
-                file_path = os.path.join(out_dir, f"{tx}_{tz}.png")
-                
-                # Skip if already downloaded
-                if os.path.exists(file_path):
-                    # print(f"[{count}/{total_tiles}] Zoom {zoom} Tile {tx}_{tz} already exists, skipping")
-                    continue
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            for tz in range(min_tz, max_tz + 1):
+                for tx in range(min_tx, max_tx + 1):
+                    count += 1
+                    tile_url = f"https://map.earthmc.net/tiles/minecraft_overworld/{zoom}/{tx}_{tz}.png"
+                    file_path = os.path.join(out_dir, f"{tx}_{tz}.png")
                     
-                res = session.get(tile_url)
-                
-                if res.status_code == 200:
-                    with open(file_path, 'wb') as f:
-                        f.write(res.content)
-                    print(f"[{count}/{total_tiles}] Downloaded {tx}_{tz}.png")
-                # else:
-                #     pass # Silenced to prevent terminal spam when tiles are empty (ocean)
-                
-                # Tiny sleep to ensure you don't get IP banned
-                if RATELIMIT_PROTECTION: 
-                    time.sleep(0.1)
+                    futures.append(executor.submit(
+                        _download_tile, session, tile_url, file_path, count, total_tiles, tx, tz, zoom, RATELIMIT_PROTECTION
+                    ))
+            
+            for future in as_completed(futures):
+                future.result()
 
     print("\nDone downloading all tiles!")
 
