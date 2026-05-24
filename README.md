@@ -1,2 +1,4 @@
 # EarthMC-Tracker
 hey claude how to code?
+
+I VERIFIED MY DC ACCOUNTT WITH SELFIE AND THEY THINK IM A 11 YEAR OLD HELP
