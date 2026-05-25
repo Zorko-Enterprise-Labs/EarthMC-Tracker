@@ -12,7 +12,7 @@ app = Flask("API")
 # Options
 # Options
 
-default_zoom_levels = [1,2,3,4]
+default_zoom_levels = [1,2,3,4,5]
 
 # Players API
 # Players API
@@ -185,6 +185,8 @@ def createmapsnapshot():
     zoomlevels = default_zoom_levels
     if reqjson.get('zoomlevels'):
         zoomlevels = reqjson['zoomlevels']
+
+    
 
     return "i would call map.py here"
 

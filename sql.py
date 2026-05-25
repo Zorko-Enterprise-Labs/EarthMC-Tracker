@@ -79,8 +79,32 @@ with con:
     def getmapsnapshottimeradius(timestamp : int, timeradius : int):
         mapsnapshots = getallmapsnapshots()
         # if not cur.fetchall():
-            # return None
-        result = cur.fetchall()
+        #     return None
+        # result = cur.fetchall()
+        result = []
+        for snapshot in mapsnapshots:
+            snapshottimestamp = snapshot[3]
+            difference = abs(timestamp - snapshottimestamp)
+            if difference <= timeradius:
+                result.append(snapshot)
+        return result
+
+    def getmapsnapshotbyid(id : int):
+        cur.execute("""SELECT * FROM mapsnapshots WHERE ID = ?""",
+            (id,)
+        )
+        return cur.fetchall()
+
+    def getmapsnapshotbypath(path : str):
+        cur.execute("""SELECT * FROM mapsnapshots WHERE folderpath = ?""",
+            (path,)
+        )
+        return cur.fetchall()
+    
+    def getmapsnapshotbytimestamp(timestamp : int):
+        cur.execute("""SELECT * FROM mapsnapshots WHERE Timestamp = ?""",
+            (timestamp,)
+        )
         return cur.fetchall()
 
     def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
