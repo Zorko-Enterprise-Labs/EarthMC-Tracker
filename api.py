@@ -15,7 +15,7 @@ app = Flask("API")
 # Options
 # Options
 
-default_zoom_levels = [1,2,3,4,5]
+default_zoom_levels = [0,1,2,3,4,5]
 
 # Players API
 # Players API
@@ -230,7 +230,7 @@ def gettiles():
         if not reqargs:
             return errors.geterror(4)
 
-        if not apikeys.checkcreateperms(reqargs.get('apikey')):
+        if not apikeys.checkdeleteperms(reqargs.get('apikey')):
             return errors.geterror(1)
 
         inputtedidstr = reqargs.get('snapshotid')
@@ -259,7 +259,7 @@ def gettiles():
         if not reqjson:
             return errors.geterror(4)
 
-        if not apikeys.checkcreateperms(reqjson.get('apikey')):
+        if not apikeys.checkdeleteperms(reqjson.get('apikey')):
             return errors.geterror(1)
 
         inputtedid = reqjson.get('snapshotid')
@@ -283,8 +283,39 @@ def gettiles():
     # return send_file(zoomlevel.getfile(f"{inputtedtile}.png"), mimetype='image/gif')
     return send_file(io.BytesIO(tilebinary), mimetype='image/png')
     return errors.geterror(0)
+
+def formatgetsnapshotsresponse(sqlresponse):
+    if sqlresponse[2] == 1:
+        isComplete = True
+    else:
+        isComplete = False
+
+    return {
+        "id" : sqlresponse[0],
+        "folderpath" : sqlresponse[1],
+        "completed" : isComplete,
+        "timestamp" : sqlresponse[3]
+    }
+
+@app.route("/map/getsnapshots", methods=['POST'])
+def getmapnapshots():
+    reqjson = request.json
+    if not reqjson:
+        return errors.geterror(4)
+
+    if not apikeys.checkreadperms(reqjson.get('apikey')):
+        return errors.geterror(1)
+
+    if reqjson.get('id'):
+        snapshot = sql.getmapsnapshotbyid(reqjson['id'])[0]
+
+        response = formatgetsnapshotsresponse(snapshot)
+        return [response]
     
+    snapshot = sql.getallmapsnapshots()
+    response = formatgetsnapshotsresponse(snapshot)
     
+    return response
     
     
 app.run(debug=False)
