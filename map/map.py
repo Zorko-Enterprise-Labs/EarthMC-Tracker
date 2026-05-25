@@ -40,7 +40,7 @@ def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT
 
     for zoom in ZOOM_LEVELS:
         print(f"\n--- Downloading Zoom Level {zoom} ---")
-        out_dir = f"{output_folder}{zoom}"
+        out_dir = os.path.join(output_folder, str(zoom))
         os.makedirs(out_dir, exist_ok=True)
     
         # Calculate grid size for this specific zoom
