@@ -1,3 +1,4 @@
+import threading
 import map.api_interface as map_interface
 import json
 from flask import Flask, url_for, request
@@ -174,6 +175,11 @@ def getsnapshot():
 # Map API
 # Map API
 
+def onfinish(mapsnapshot : int):
+    if not sql.getmapsnapshotbyid(mapsnapshot):
+        return None
+    
+
 @app.route("/map/createsnapshot", methods=['POST'])
 def createmapsnapshot():
     reqjson = request.json
@@ -188,6 +194,9 @@ def createmapsnapshot():
         zoomlevels = reqjson['zoomlevels']
 
     name = map_interface.getsuggestedtilespath()
+    sql.addmapsnapshot(name, False)
+    snapshotid = sql
+    threading.Thread(target=map_interface.downloadsnapshotbackground, args=(name,snapshotid,onfinish,zoomlevels))
     
 
     return "i would call map.py here"

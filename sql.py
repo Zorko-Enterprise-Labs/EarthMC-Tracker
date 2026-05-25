@@ -107,6 +107,18 @@ with con:
         )
         return cur.fetchall()
 
+    def getlatestmapsnapshot():
+        snapshots = getallmapsnapshots()
+        if not snapshots:
+            return None
+        return snapshots[0] 
+
+    def setmapsnapshotfinished(snapshotid : int, isfinished : bool):
+        cur.execute("""UPDATE mapsnapshots SET completed = ? WHERE ID = ?""",
+            (isfinished, snapshotid)
+        )
+        con.commit()
+
     def insertkey(key : str, createperms : bool, readperms : bool, deleteperms : bool):
         cur.execute("""INSERT INTO apikeys (createperms, readperms, deleteperms, apikey) VALUES (?,?,?,?)""",
             (createperms, readperms, deleteperms, key)
