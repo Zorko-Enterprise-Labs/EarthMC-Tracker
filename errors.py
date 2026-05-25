@@ -20,4 +20,10 @@ def geterror(error : int):
         return builderror("No snapshots were provided for deletion", 5)
     if error == 6:
         return builderror("JSON missing required keys", 6)
+    if error == 7:
+        return builderror("Key has incorrect type", 7)
+    if error == 8:
+        return builderror("Request args is missing a key", 8)
+    if error == 9:
+        return builderror("Request has no args", 9)
     return builderror("Unknown error", 0)

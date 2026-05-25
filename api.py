@@ -226,7 +226,33 @@ def createmapsnapshot():
 @app.route("/map/gettiles", methods=['POST', 'GET'])
 def gettiles():
     if request.method == 'GET':
-        return "hi leaflet"
+        reqargs = request.args
+        if not reqargs:
+            return errors.geterror(4)
+
+        if not apikeys.checkcreateperms(reqargs.get('apikey')):
+            return errors.geterror(1)
+
+        inputtedidstr = reqargs.get('snapshotid')
+        if not inputtedidstr:
+            return errors.geterror(8)
+        try:
+            inputtedid = int(inputtedidstr)
+        except:
+            return errors.geterror(7)
+
+        inputtedzoomlevelstr = reqargs.get('zoomlevel')
+        if not inputtedzoomlevelstr:
+            return errors.geterror(8)
+        try:
+            inputtedzoomlevel = int(inputtedzoomlevelstr)
+        except:
+            return errors.geterror(7)
+
+        inputtedtile = reqargs.get('tile')
+        if not inputtedtile:
+            return errors.geterror(6)
+        # return reqargs
 
     if request.method == 'POST':
         reqjson = request.json
