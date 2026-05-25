@@ -1,3 +1,4 @@
+import map.api_interface as map_interface
 import json
 from flask import Flask, url_for, request
 import sql
@@ -186,6 +187,7 @@ def createmapsnapshot():
     if reqjson.get('zoomlevels'):
         zoomlevels = reqjson['zoomlevels']
 
+    name = map_interface.getsuggestedtilespath()
     
 
     return "i would call map.py here"
