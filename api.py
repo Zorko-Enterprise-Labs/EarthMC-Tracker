@@ -176,9 +176,7 @@ def getsnapshot():
 # Map API
 
 def onfinish(mapsnapshot : int):
-    if not sql.getmapsnapshotbyid(mapsnapshot):
-        return None
-    
+    sql.setmapsnapshotfinished(mapsnapshot, True)
 
 @app.route("/map/createsnapshot", methods=['POST'])
 def createmapsnapshot():
@@ -195,11 +193,27 @@ def createmapsnapshot():
 
     name = map_interface.getsuggestedtilespath()
     sql.addmapsnapshot(name, False)
-    snapshotid = sql
-    threading.Thread(target=map_interface.downloadsnapshotbackground, args=(name,snapshotid,onfinish,zoomlevels))
-    
 
-    return "i would call map.py here"
+    snapshotid = sql.getlatestmapsnapshot()[0]
+
+    thread = threading.Thread(target=map_interface.downloadsnapshotbackground, args=(name,snapshotid,onfinish,zoomlevels))
+    thread.start()
+
+    snapshot = sql.getmapsnapshotbyid(snapshotid)[0]
+
+    if snapshot[2] == 1:
+        isComplete = True
+    else:
+        isComplete = False
+
+    timestamp = snapshot[3]
+
+    return {
+        "snapshotid" : snapshotid,
+        "snapshotpath" : name,
+        "isfinished" : isComplete,
+        "timestamp" : timestamp
+    }
 
     return errors.geterror(0)
 app.run(debug=False)

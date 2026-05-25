@@ -1,4 +1,8 @@
-import map
+if __name__ == "__main__":
+    import map
+else:
+    import map.map as map
+
 import datetime
 import time
 import os
@@ -33,9 +37,9 @@ class SnapshotFolder:
             if level.level == zoomlevel:
                 return level
 
-def downloadsnapshot(path : str, prepath=defaultfolder, zoomlevels=defaultzoomlevels):
+def downloadsnapshot(path : str, prepath=defaultfolder, zoomlevels=defaultzoomlevels, verboselogging=True):
     outputfolder = os.path.join(prepath, path)
-    map.download_all_tiles(outputfolder, ZOOM_LEVELS=zoomlevels)
+    map.download_all_tiles(outputfolder, ZOOM_LEVELS=zoomlevels, verboselogging=verboselogging)
 
 def getsnapshot(path : str, prepath=defaultfolder):
     inputfolder = os.path.join(prepath, path)
@@ -57,6 +61,6 @@ def getsuggestedtilespath(datetimeformat=defaultdatetimeformat):
     date = datetime.datetime.now(datetime.timezone.utc).strftime(datetimeformat)
     return date
 
-def downloadsnapshotbackground(path : str, id : int, onfinish : callable, prepath=defaultfolder, zoomlevels=defaultzoomlevels):
-    downloadsnapshot(path, prepath=defaultfolder, zoomlevels=defaultzoomlevels)
+def downloadsnapshotbackground(path : str, id : int, onfinish : callable, prepath=defaultfolder, zoomlevels=defaultzoomlevels, verboselogging=True):
+    downloadsnapshot(path, prepath=defaultfolder, zoomlevels=zoomlevels, verboselogging=verboselogging)
     onfinish(id)

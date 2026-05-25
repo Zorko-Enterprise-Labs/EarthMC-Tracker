@@ -18,7 +18,7 @@ DEFAULT_RATELIMIT_PROTECTION = False
 # ZOOM_LEVELS = [0, 1, 2, 3, 4, 5]
 DEFAULT_ZOOM_LEVELS = [0,1,2,3,4,5]
 
-def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoom, RATELIMIT_PROTECTION):
+def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoom, RATELIMIT_PROTECTION, verboselogging=True):
     # Skip if already downloaded
     if os.path.exists(file_path):
         return
@@ -28,18 +28,20 @@ def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoo
     if res.status_code == 200:
         with open(file_path, 'wb') as f:
             f.write(res.content)
-        print(f"[{count}/{total_tiles}] Downloaded {tx}_{tz}.png (Zoom {zoom})")
+        if verboselogging:
+            print(f"[{count}/{total_tiles}] Downloaded {tx}_{tz}.png (Zoom {zoom})")
     
     # Tiny sleep to ensure you don't get IP banned
     if RATELIMIT_PROTECTION: 
         time.sleep(0.1)
 
-def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=20):
+def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=20, verboselogging=True):
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
 
     for zoom in ZOOM_LEVELS:
-        print(f"\n--- Downloading Zoom Level {zoom} ---")
+        if verboselogging:
+            print(f"\n--- Downloading Zoom Level {zoom} ---")
         out_dir = os.path.join(output_folder, str(zoom))
         os.makedirs(out_dir, exist_ok=True)
     
@@ -54,7 +56,8 @@ def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT
         max_tz = math.floor(MAX_Z / blocks_per_tile)
         
         total_tiles = (max_tx - min_tx + 1) * (max_tz - min_tz + 1)
-        print(f"Total grid tiles to check for zoom {zoom}: {total_tiles}")
+        if verboselogging:
+            print(f"Total grid tiles to check for zoom {zoom}: {total_tiles}")
         
         count = 0
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -66,13 +69,13 @@ def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT
                     file_path = os.path.join(out_dir, f"{tx}_{tz}.png")
                     
                     futures.append(executor.submit(
-                        _download_tile, session, tile_url, file_path, count, total_tiles, tx, tz, zoom, RATELIMIT_PROTECTION
+                        _download_tile, session, tile_url, file_path, count, total_tiles, tx, tz, zoom, RATELIMIT_PROTECTION, verboselogging
                     ))
             
             for future in as_completed(futures):
                 future.result()
-
-    print("\nDone downloading all tiles!")
+    if verboselogging:
+        print("\nDone downloading all tiles!")
 
 if __name__ == "__main__":
     download_all_tiles("test/", ZOOM_LEVELS=[1])
