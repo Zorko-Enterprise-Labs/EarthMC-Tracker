@@ -1,7 +1,8 @@
+import io
 import threading
 import map.api_interface as map_interface
 import json
-from flask import Flask, url_for, request
+from flask import Flask, url_for, request, send_file
 import sql
 import players.api_interface as api_interface
 import apikeys
@@ -222,12 +223,42 @@ def createmapsnapshot():
 
     return errors.geterror(0)
 
-@app.route("/map/gettiles", methods=['POST'])
+@app.route("/map/gettiles", methods=['POST', 'GET'])
 def gettiles():
-    reqjson = request.json
-    if not reqjson:
-        return errors.geterror(4)
+    if request.method == 'GET':
+        return "hi leaflet"
 
-    if not apikeys.checkcreateperms(reqjson.get('apikey')):
-        return errors.geterror(1)
+    if request.method == 'POST':
+        reqjson = request.json
+        if not reqjson:
+            return errors.geterror(4)
+
+        if not apikeys.checkcreateperms(reqjson.get('apikey')):
+            return errors.geterror(1)
+
+        inputtedid = reqjson.get('snapshotid')
+        if not inputtedid:
+            return errors.geterror(6)
+
+        inputtedzoomlevel = reqjson.get('zoomlevel')
+        if not inputtedzoomlevel:
+            return errors.geterror(6)
+
+        inputtedtile = reqjson.get('tile')
+        if not inputtedtile:
+            return errors.geterror(6)
+     
+    snapshotpath = sql.getmapsnapshotbyid(inputtedid)[0][1]
+    snapshot = map_interface.getsnapshot(snapshotpath)
+    zoomlevel = snapshot.getzoomlevel(inputtedzoomlevel)
+
+    tilebinary = zoomlevel.getfile(f"{inputtedtile}.png")
+
+    # return send_file(zoomlevel.getfile(f"{inputtedtile}.png"), mimetype='image/gif')
+    return send_file(io.BytesIO(tilebinary), mimetype='image/png')
+    return errors.geterror(0)
+    
+    
+    
+    
 app.run(debug=False)
