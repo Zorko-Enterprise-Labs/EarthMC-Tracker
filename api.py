@@ -205,7 +205,7 @@ def createmapsnapshot():
     thread = threading.Thread(target=map_interface.downloadsnapshotbackground, args=(name,snapshotid,onfinish), kwargs={'zoomlevels': zoomlevels, 'verboselogging': False})
     thread.start()
 
-    snapshot = sql.getmapsnapshotbyid(snapshotid)[0]
+    snapshot = sql.getmapsnapshotfromid(snapshotid)[0]
 
     if snapshot[2] == 1:
         isComplete = True
@@ -274,7 +274,7 @@ def gettiles():
         if not inputtedtile:
             return errors.geterror(6)
      
-    snapshotpath = sql.getmapsnapshotbyid(inputtedid)[0][1]
+    snapshotpath = sql.getmapsnapshotfromid(inputtedid)[1]
     snapshot = map_interface.getsnapshot(snapshotpath)
     zoomlevel = snapshot.getzoomlevel(inputtedzoomlevel)
 
@@ -307,7 +307,7 @@ def getmapnapshots():
         return errors.geterror(1)
 
     if reqjson.get('id'):
-        snapshot = sql.getmapsnapshotbyid(reqjson['id'])[0]
+        snapshot = sql.getmapsnapshotfromid(reqjson['id'])[0]
 
         response = formatgetsnapshotsresponse(snapshot)
         return [response]
@@ -316,6 +316,34 @@ def getmapnapshots():
     response = formatgetsnapshotsresponse(snapshot)
     
     return response
+
+@app.route("/map/deletesnapshots", methods=['POST'])
+def deletemapsnapshot():
+    reqjson = request.json
+    if not reqjson:
+        return errors.geterror(4)
     
+    if not apikeys.checkdeleteperms(reqjson.get('apikey')):
+        return errors.geterror(1)
+
+    if not reqjson.get('snapshotids'):
+        return errors.geterror(6)
+
+    todelete = reqjson['snapshotids']
+
+    if not todelete:
+        return errors.geterror(5)
+
+    for id in todelete:
+        if not id:
+            return error.geterror(3)
+        if not sql.getmapsnapshotfromid(id):
+            return errors.geterror(3)
+        sql.deletemapsnapshot(id)
+
+    response = {
+        'deleted' : 'true'
+    }
+    return response
     
 app.run(debug=False)

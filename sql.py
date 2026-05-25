@@ -89,11 +89,16 @@ with con:
                 result.append(snapshot)
         return result
 
-    def getmapsnapshotbyid(id : int):
+    def getmapsnapshotfromid(id : int):
         cur.execute("""SELECT * FROM mapsnapshots WHERE ID = ?""",
             (id,)
         )
-        return cur.fetchall()
+        result = cur.fetchall()
+
+        if result != [] and result != None:
+            return result[0]
+        else:
+            return None
 
     def getmapsnapshotbypath(path : str):
         cur.execute("""SELECT * FROM mapsnapshots WHERE folderpath = ?""",
