@@ -23,3 +23,8 @@ Make sure you have **Python 3.8 or higher** installed on your machine.
 ```bash
 git clone [https://github.com/NejcZorko007/EarthMC-Tracker.git](https://github.com/NejcZorko007/EarthMC-Tracker.git)
 cd EarthMC-Tracker
+```
+
+hey claude how to code?
+
+I VERIFIED MY DC ACCOUNTT WITH SELFIE AND THEY THINK IM A 11 YEAR OLD HELP
