@@ -205,7 +205,7 @@ def createmapsnapshot():
     thread = threading.Thread(target=map_interface.downloadsnapshotbackground, args=(name,snapshotid,onfinish), kwargs={'zoomlevels': zoomlevels, 'verboselogging': False})
     thread.start()
 
-    snapshot = sql.getmapsnapshotfromid(snapshotid)[0]
+    snapshot = sql.getmapsnapshotfromid(snapshotid)
 
     if snapshot[2] == 1:
         isComplete = True
