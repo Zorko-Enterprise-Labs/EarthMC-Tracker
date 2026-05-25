@@ -18,4 +18,6 @@ def geterror(error : int):
         return builderror("Request has no JSON content", 4)
     if error == 5:
         return builderror("No snapshots were provided for deletion", 5)
+    if error == 6:
+        return builderror("JSON missing required keys", 6)
     return builderror("Unknown error", 0)

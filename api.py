@@ -31,6 +31,8 @@ def addsnapshot():
     
     action = reqjson['action']
     if action == "track":
+        if not reqjson.get('uuid'):
+            return errors.geterror(6)
         uuid = reqjson['uuid']
         coords = api_interface.easyfindplayer(uuid, api_interface.getcoordslist())
             
@@ -74,6 +76,9 @@ def deletesnapshot():
     
     if not apikeys.checkdeleteperms(reqjson.get('apikey')):
         return errors.geterror(1)
+
+    if not reqjson.get('snapshotids'):
+        return errors.geterror(6)
 
     todelete = reqjson['snapshotids']
 
