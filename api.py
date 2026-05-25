@@ -2,7 +2,7 @@ import io
 import threading
 import map.api_interface as map_interface
 import json
-from flask import Flask, url_for, request, send_file
+from flask import Flask, url_for, request, send_file, render_template
 import sql
 import players.api_interface as api_interface
 import apikeys
@@ -345,5 +345,10 @@ def deletemapsnapshot():
         'deleted' : 'true'
     }
     return response
+    
+
+@app.route("/")
+def map():
+    return render_template("index.html")
     
 app.run(debug=False)
