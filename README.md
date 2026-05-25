@@ -1,7 +1,3 @@
-hey claude how to code?
-
-I VERIFIED MY DC ACCOUNTT WITH SELFIE AND THEY THINK IM A 11 YEAR OLD HELP
-
 # EarthMC Tracker
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
