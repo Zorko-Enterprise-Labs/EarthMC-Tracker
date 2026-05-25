@@ -196,7 +196,7 @@ def createmapsnapshot():
 
     snapshotid = sql.getlatestmapsnapshot()[0]
 
-    thread = threading.Thread(target=map_interface.downloadsnapshotbackground, args=(name,snapshotid,onfinish,zoomlevels))
+    thread = threading.Thread(target=map_interface.downloadsnapshotbackground, args=(name,snapshotid,onfinish), kwargs={'zoomlevels': zoomlevels, 'verboselogging': False})
     thread.start()
 
     snapshot = sql.getmapsnapshotbyid(snapshotid)[0]
