@@ -26,7 +26,7 @@ def addsnapshot():
     if not reqjson:
         return errors.geterror(4)
     
-    if not apikeys.checkcreateperms(reqjson['apikey']):
+    if not apikeys.checkcreateperms(reqjson.get('apikey')):
         return errors.geterror(1)
     
     action = reqjson['action']
@@ -72,7 +72,7 @@ def deletesnapshot():
     if not reqjson:
         return errors.geterror(4)
     
-    if not apikeys.checkdeleteperms(reqjson['apikey']):
+    if not apikeys.checkdeleteperms(reqjson.get('apikey')):
         return errors.geterror(1)
 
     todelete = reqjson['snapshotids']
@@ -125,7 +125,7 @@ def getsnapshot():
     if not reqjson:
         return errors.geterror(4)
 
-    if not apikeys.checkreadperms(reqjson['apikey']):
+    if not apikeys.checkreadperms(reqjson.get('apikey')):
         return errors.geterror(1)
 
     if reqjson.get('id'):
@@ -184,7 +184,7 @@ def createmapsnapshot():
     if not reqjson:
         return errors.geterror(4)
     
-    if not apikeys.checkcreateperms(reqjson['apikey']):
+    if not apikeys.checkcreateperms(reqjson.get('apikey')):
         return errors.geterror(1)
 
     zoomlevels = default_zoom_levels
@@ -216,4 +216,13 @@ def createmapsnapshot():
     }
 
     return errors.geterror(0)
+
+@app.route("/map/gettiles", methods=['POST'])
+def gettiles():
+    reqjson = request.json
+    if not reqjson:
+        return errors.geterror(4)
+
+    if not apikeys.checkcreateperms(reqjson.get('apikey')):
+        return errors.geterror(1)
 app.run(debug=False)
