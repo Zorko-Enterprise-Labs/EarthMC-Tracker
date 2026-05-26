@@ -351,4 +351,4 @@ def deletemapsnapshot():
 def map():
     return render_template("index.html")
     
-app.run(debug=False)
+# app.run(debug=False)
