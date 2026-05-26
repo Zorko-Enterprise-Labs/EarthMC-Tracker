@@ -252,7 +252,6 @@ def gettiles():
         inputtedtile = reqargs.get('tile')
         if not inputtedtile:
             return errors.geterror(6)
-        # return reqargs
 
     if request.method == 'POST':
         reqjson = request.json
@@ -273,9 +272,7 @@ def gettiles():
         inputtedtile = reqjson.get('tile')
         if not inputtedtile:
             return errors.geterror(6)
-    # print(inputtedid)
     snapshotpath = sql.getmapsnapshotfromid(inputtedid)[1]
-    # print(snapshotpath)
     snapshot = map_interface.getsnapshot(snapshotpath)
     zoomlevel = snapshot.getzoomlevel(inputtedzoomlevel)
 
@@ -283,7 +280,6 @@ def gettiles():
 
     # return send_file(zoomlevel.getfile(f"{inputtedtile}.png"), mimetype='image/gif')
     return send_file(io.BytesIO(tilebinary), mimetype='image/png')
-    return errors.geterror(0)
 
 def formatgetsnapshotsresponse(sqlresponse):
     if sqlresponse[2] == 1:
@@ -351,6 +347,3 @@ def deletemapsnapshot():
 @app.route("/")
 def map():
     return render_template("index.html")
-    
-# app.run(debug=False)
-# print(sql.getmapsnapshotfromid(3))

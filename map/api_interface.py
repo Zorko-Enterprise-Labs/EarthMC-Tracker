@@ -64,4 +64,3 @@ def getsuggestedtilespath(datetimeformat=defaultdatetimeformat):
 def downloadsnapshotbackground(path : str, id : int, onfinish : callable, prepath=defaultfolder, zoomlevels=defaultzoomlevels, verboselogging=True):
     downloadsnapshot(path, prepath=defaultfolder, zoomlevels=zoomlevels, verboselogging=verboselogging)
     onfinish(id)
-downloadsnapshot(getsuggestedtilespath(), zoomlevels=[0,1,2,3,4,5])

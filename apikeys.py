@@ -46,4 +46,3 @@ def checkdeleteperms(apikey):
         return True
     else:
         return False
-# print(addkey(True,True,True))
