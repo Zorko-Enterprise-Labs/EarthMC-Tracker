@@ -20,7 +20,6 @@ class ZoomLevel:
 
     def getfile(self, filename : str):
         path = os.path.join(self.parentpath, str(self.level), filename)
-        print(path)
         if not os.path.isfile(path):
             return None
         filecontent = open(path, "rb").read()
