@@ -273,8 +273,9 @@ def gettiles():
         inputtedtile = reqjson.get('tile')
         if not inputtedtile:
             return errors.geterror(6)
-     
+    # print(inputtedid)
     snapshotpath = sql.getmapsnapshotfromid(inputtedid)[1]
+    # print(snapshotpath)
     snapshot = map_interface.getsnapshot(snapshotpath)
     zoomlevel = snapshot.getzoomlevel(inputtedzoomlevel)
 
@@ -309,11 +310,11 @@ def getmapnapshots():
     if reqjson.get('id'):
         snapshot = sql.getmapsnapshotfromid(reqjson['id'])[0]
 
-        response = formatgetsnapshotsresponse(snapshot)
+        response = formatgetsnapshotsresponse(snapshot[0])
         return [response]
     
     snapshot = sql.getallmapsnapshots()
-    response = formatgetsnapshotsresponse(snapshot)
+    response = formatgetsnapshotsresponse(snapshot[0])
     
     return response
 
@@ -352,3 +353,4 @@ def map():
     return render_template("index.html")
     
 # app.run(debug=False)
+# print(sql.getmapsnapshotfromid(3))
