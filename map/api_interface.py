@@ -48,6 +48,8 @@ def downloadsnapshot(path : str, prepath=defaultfolder, zoomlevels=defaultzoomle
 
 def getsnapshot(path : str, prepath=defaultfolder):
     inputfolder = os.path.join(prepath, path)
+    if not os.path.exists(inputfolder):
+        return None
     contens = os.listdir(inputfolder)
 
     zoomlevels = []

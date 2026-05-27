@@ -2,14 +2,23 @@ import io
 import threading
 import map.api_interface as map_interface
 import json
-from flask import Flask, url_for, request, send_file, render_template
+from flask import Flask, url_for, request, send_file, render_template, send_from_directory
 import sql
 import players.api_interface as api_interface
 import apikeys
 import errors
 from datetime import datetime, timedelta
 
-app = Flask("API")
+app = Flask("API", template_folder="templates")
+
+@app.route("/tiles/<path:filename>")
+def serve_static_tiles(filename):
+    return send_from_directory("tiles", filename)
+
+@app.route("/status")
+def download_status():
+    from map import server as map_server
+    return {"downloading": map_server.is_downloading}
 
 # Options
 # Options
@@ -274,12 +283,20 @@ def gettiles():
             return errors.geterror(6)
     snapshotpath = sql.getmapsnapshotfromid(inputtedid)[1]
     snapshot = map_interface.getsnapshot(snapshotpath)
+    if snapshot is None:
+        return errors.geterror(8) # Or appropriate error code for not found
     zoomlevel = snapshot.getzoomlevel(inputtedzoomlevel)
 
+    if zoomlevel is None:
+        return errors.geterror(8)
+
     tilebinary = zoomlevel.getfile(f"{inputtedtile}.png")
+    if tilebinary is None:
+        return errors.geterror(8)
 
     # return send_file(zoomlevel.getfile(f"{inputtedtile}.png"), mimetype='image/gif')
     return send_file(io.BytesIO(tilebinary), mimetype='image/png')
+
 
 def formatgetsnapshotsresponse(sqlresponse):
     if sqlresponse[2] == 1:
@@ -309,11 +326,8 @@ def getmapnapshots():
         response = formatgetsnapshotsresponse(snapshot[0])
         return [response]
     
-    snapshots = sql.getallmapsnapshots()
-    response = []
-    for entry in snapshots:
-        snapshotentry = formatgetsnapshotsresponse(entry)
-        response.append(snapshotentry)
+    snapshot = sql.getallmapsnapshots()
+    response = formatgetsnapshotsresponse(snapshot[0])
     
     return response
 
@@ -347,6 +361,40 @@ def deletemapsnapshot():
     return response
     
 
+@app.route("/map/players_live", methods=["GET"])
+def live_players():
+    # Public route for the map to fetch live players seamlessly
+    try:
+        players = api_interface.getcoordslist()
+        return players
+    except Exception as e:
+        print(f"Error fetching players: {e}")
+        return []
+
+@app.route("/players/search", methods=["GET"])
+def search_player():
+    username = request.args.get('username')
+    if not username:
+        return {"error": "No username provided"}, 400
+
+    # Convert username to UUID in the backend as requested
+    mojang_uuid = api_interface.getuuid(username)
+    if not mojang_uuid:
+        return {"error": "Minecraft username not found"}, 404
+
+    # Search for this UUID in the live EarthMC players
+    try:
+        players = api_interface.getcoordslist()
+        for player in players:
+            if player.get('uuid') == mojang_uuid:
+                return player
+        return {"error": f"Player '{username}' is not currently online on the EarthMC map."}, 404
+    except Exception as e:
+        return {"error": "Failed to fetch live coordinates"}, 500
+
 @app.route("/")
 def map():
     return render_template("index.html")
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000)

@@ -29,10 +29,112 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.5);
             display: none;
         }
+
+        #search-box {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            display: flex;
+            gap: 5px;
+        }
+        
+        #search-box input {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #2a2a2a;
+            color: #fff;
+            outline: none;
+        }
+        
+        #search-box button {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            background: #ffcc00;
+            color: #1a1a1a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        #search-box button:hover {
+            background: #e6b800;
+        }
+
+        #autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 30, 30, 0.9);
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 5px;
+            z-index: 1000;
+        }
+
+        .autocomplete-item {
+            padding: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: #444;
+        }
+
+        .autocomplete-item img {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            image-rendering: pixelated;
+        }
+
+        /* Container wrapper so autocomplete positions correctly relative to search box */
+        #search-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        #search-box {
+            background: rgba(30, 30, 30, 0.9);
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            display: flex;
+            gap: 5px;
+            position: relative; /* Make sure dropdown is absolute relative to this */
+        }
     </style>
 </head>
 <body>
     <div id="loading-banner">Please wait while map images are downloading in the background...</div>
+    <div id="search-container">
+        <div id="search-box">
+            <input type="text" id="username-input" placeholder="Search Player..." onkeydown="if(event.key === 'Enter'){ searchPlayer(); }" />
+            <button onclick="searchPlayer()">Locate</button>
+            <div id="autocomplete-list"></div>
+        </div>
+    </div>
     <div id="map"></div>
     <script>
         const apikey = "I9DYCLxy0Mjr16gwg2EDoQ"
@@ -48,7 +150,8 @@
             center: [9992, 53191], // [z, x] directly without weird negatives
             zoom: 7,
             minZoom: 0,
-            maxZoom: 7
+            maxZoom: 7,
+            attributionControl: false
         });
 
         // Extend Leaflet's TileLayer to match the Squaremap file naming convention
@@ -60,8 +163,7 @@
             getTileUrl: function(coords) {
                 // Ensure we request the correct zoom level and format
                 var zoom = this._getZoomForUrl();
-                // return 'tiles/minecraft_overworld/' + zoom + '/' + coords.x + '_' + coords.y + '.png';
-                return `/map/gettiles?apikey=${apikey}&snapshotid=3&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
+                return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
             }
         });
 
@@ -72,52 +174,196 @@
             maxNativeZoom: 5,           // maximum physically downloaded zoom
             maxZoom: 7,                 // allows browser upscaling of native zoom 5 up to visual zoom 7
             noWrap: true,               // Don't wrap the map around like a globe
+            keepBuffer: 9999,           // Keep all loaded tiles in memory so they aren't unloaded when panning
+            updateWhenZooming: false,   // Prevents tile updates while zooming to keep it smooth
             errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' // Empty transparent pixel for missing tiles (ocean)
         });
 
         earthmcLayer.addTo(map);
 
         // Check the server status to see if tiles are actively downloading
-        // function checkDownloadStatus() {
-        //     fetch('/status')
-        //         .then(response => response.json())
-        //         .then(data => {
-        //             const banner = document.getElementById('loading-banner');
-        //             if (data.downloading) {
-        //                 banner.style.display = 'block';
-        //                 // Recheck in 3 seconds
-        //                 setTimeout(checkDownloadStatus, 3000);
-        //             } else {
-        //                 banner.style.display = 'none';
-        //             }
-        //         })
-        //         .catch(err => {
-        //             // Try again in case server temporarily lagged
-        //             setTimeout(checkDownloadStatus, 5000);
-        //         });
-        // }
-        
-        // Start watching the status
-        // checkDownloadStatus();
-        function getallmapsnapshots(apikey) {
-            fetch('/map/getsnapshots', 
-                {
-                    method : 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ apikey : 'I9DYCLxy0Mjr16gwg2EDoQ' })
-                }
-
-            )
+        function checkDownloadStatus() {
+            fetch('/status')
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data)
+                    const banner = document.getElementById('loading-banner');
+                    if (data.downloading) {
+                        banner.style.display = 'block';
+                        // Recheck in 3 seconds
+                        setTimeout(checkDownloadStatus, 3000);
+                    } else {
+                        banner.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    // Try again in case server temporarily lagged
+                    setTimeout(checkDownloadStatus, 5000);
                 });
         }
-        getallmapsnapshots(apikey)
+        
+        // Start watching the status
+        checkDownloadStatus();
+
+
+        // Layer group to hold player markers so we can easily clear them on refresh
+        var playerLayer = L.layerGroup().addTo(map);
+        window.livePlayers = [];
+        var playerMarkers = {}; // Keep track of marker instances by name
+
+        function updatePlayers() {
+            fetch('/map/players_live')
+                .then(response => response.json())
+                .then(players => {
+                    window.livePlayers = players;
+                    
+                    let currentNames = new Set();
+                    
+                    players.forEach(player => {
+                        // Ignore players not in overworld if 'world' is defined, though our custom API might just have coord structure
+                        if (player.world && player.world !== "minecraft_overworld") return;
+                        
+                        let name = player.name;
+                        currentNames.add(name);
+
+                        // EarthMC mapping uses Z for Lat, and X for Lng.
+                        let lat = player.z;
+                        let lng = player.x;
+                        
+                        let popupContent = `<div style="color: black; min-width: 150px;">
+                            <div style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-bottom: 3px;">${player.name}</div>
+                            <table style="font-size: 12px; width: 100%;">`;
+                        for (let key in player) {
+                            if (key !== 'name') {
+                                popupContent += `<tr><td style="padding-right: 10px; font-weight: bold;">${key}</td><td style="word-break: break-all;">${player[key]}</td></tr>`;
+                            }
+                        }
+                        popupContent += `</table></div>`;
+
+                        if (playerMarkers[name]) {
+                            // Update existing marker position
+                            playerMarkers[name].setLatLng([lat, lng]);
+                            // Update popup content just in case properties changed
+                            playerMarkers[name].getPopup().setContent(popupContent);
+                        } else {
+                            // Create custom div icon with Minecraft head and player name inline
+                            let customIcon = L.divIcon({
+                                className: 'player-custom-icon',
+                                html: `
+                                    <div style="display: flex; align-items: center; white-space: nowrap; transform: translate(-50%, -50%); cursor: pointer;">
+                                        <div style="width: 16px; height: 16px; border: 1px solid #000; line-height: 0; background: #000;">
+                                            <img src="https://minotar.net/helm/${player.name}/16.png" alt="head" style="width: 16px; height: 16px; image-rendering: pixelated; display: block;">
+                                        </div>
+                                        <div style="background: rgba(0, 0, 0, 0.6); margin-left: 2px; padding: 2px 5px; border-radius: 2px; border: 1px solid #000;">
+                                            <span style="color: white; font-size: 13px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; text-shadow: 1px 1px 0 #000;">${player.name}</span>
+                                        </div>
+                                    </div>
+                                `,
+                                iconSize: [0, 0], // Center the HTML structure physically
+                                iconAnchor: [0, 0] // Anchor strictly to coordinate center
+                            });
+
+                            let marker = L.marker([lat, lng], {icon: customIcon, zIndexOffset: 1000})
+                                .bindPopup(popupContent, { offset: [0, -10] });
+                            
+                            marker.addTo(playerLayer);
+                            playerMarkers[name] = marker;
+                        }
+                    });
+                    
+                    // Remove players that are no longer active
+                    for (let name in playerMarkers) {
+                        if (!currentNames.has(name)) {
+                            playerLayer.removeLayer(playerMarkers[name]);
+                            delete playerMarkers[name];
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching live players:", err));
+        }
+
+        // Fetch players immediately, and then every 10 seconds
+        updatePlayers();
+        setInterval(updatePlayers, 3000);
+
+        // Search logic connecting Frontend -> Server -> Map
+        function searchPlayer() {
+            const usernameInput = document.getElementById("username-input");
+            const username = usernameInput.value.trim();
+            if (!username) return;
+
+            usernameInput.disabled = true;
+
+            fetch(`/players/search?username=${encodeURIComponent(username)}`)
+                .then(res => res.json())
+                .then(data => {
+                    usernameInput.disabled = false;
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                    } else {
+                        // Data from server contains exact coordinates of the active UUID
+                        let lat = data.z;
+                        let lng = data.x;
+                        
+                        // Pan and zoom the map exactly to their position
+                        map.setView([lat, lng], 6); // Max zoom or high zoom
+                    }
+                })
+                .catch(err => {
+                    console.error("Search failed:", err);
+                    usernameInput.disabled = false;
+                });
+        }
+
+        // -------------------------
+        // Autocomplete Logic
+        // -------------------------
+        const usernameInput = document.getElementById('username-input');
+        const autocompleteList = document.getElementById('autocomplete-list');
+
+        usernameInput.addEventListener('input', function() {
+            const val = this.value.toLowerCase().trim();
+            autocompleteList.innerHTML = '';
+            
+            if (!val) {
+                autocompleteList.style.display = 'none';
+                return;
+            }
+
+            // Filter players based on search query
+            const matches = window.livePlayers.filter(p => p.name && p.name.toLowerCase().includes(val));
+            
+            if (matches.length === 0) {
+                autocompleteList.style.display = 'none';
+                return;
+            }
+
+            autocompleteList.style.display = 'block';
+
+            // Show top 10 matches to avoid overflowing
+            matches.slice(0, 10).forEach(match => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                div.innerHTML = `
+                    <img src="https://minotar.net/helm/${match.name}/20.png" alt="head">
+                    <span>${match.name}</span>
+                `;
+                
+                div.onclick = function() {
+                    usernameInput.value = match.name;
+                    autocompleteList.style.display = 'none';
+                    searchPlayer();
+                };
+                
+                autocompleteList.appendChild(div);
+            });
+        });
+
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target !== usernameInput && e.target !== autocompleteList) {
+                autocompleteList.style.display = 'none';
+            }
+        });
     </script>
-</body>
-</html>
 </body>
 </html>
