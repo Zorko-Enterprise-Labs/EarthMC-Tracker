@@ -309,8 +309,11 @@ def getmapnapshots():
         response = formatgetsnapshotsresponse(snapshot[0])
         return [response]
     
-    snapshot = sql.getallmapsnapshots()
-    response = formatgetsnapshotsresponse(snapshot[0])
+    snapshots = sql.getallmapsnapshots()
+    response = []
+    for entry in snapshots:
+        snapshotentry = formatgetsnapshotsresponse(entry)
+        response.append(snapshotentry)
     
     return response
 

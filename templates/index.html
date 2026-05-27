@@ -4,7 +4,6 @@
     <title>EarthMC Tracker</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{{url_for('static', filename='apiMapInterface.js')}}"></script>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
         #map { width: 100vw; height: 100vh; background: #1a1a1a; }
@@ -100,6 +99,23 @@
         
         // Start watching the status
         // checkDownloadStatus();
+        function getallmapsnapshots(apikey) {
+            fetch('/map/getsnapshots', 
+                {
+                    method : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ apikey : 'I9DYCLxy0Mjr16gwg2EDoQ' })
+                }
+
+            )
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                });
+        }
+        getallmapsnapshots(apikey)
     </script>
 </body>
 </html>
