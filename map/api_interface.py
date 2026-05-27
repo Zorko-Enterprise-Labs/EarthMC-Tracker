@@ -47,10 +47,9 @@ def getsnapshot(path : str, prepath=defaultfolder):
     zoomlevels = []
     for item in contens:
         zoomlevel = int(item)
-        if zoomlevel:
-            imagecount = len(os.listdir(os.path.join(inputfolder, item)))
-            zoomlevel = ZoomLevel(zoomlevel, imagecount, inputfolder)
-            zoomlevels.append(zoomlevel)
+        imagecount = len(os.listdir(os.path.join(inputfolder, item)))
+        zoomlevel = ZoomLevel(zoomlevel, imagecount, inputfolder)
+        zoomlevels.append(zoomlevel)
 
     return SnapshotFolder(
         zoomlevels, inputfolder, prepath
