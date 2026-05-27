@@ -36,6 +36,12 @@ class SnapshotFolder:
             if level.level == zoomlevel:
                 return level
 
+def getintsafe(string):
+    try:
+        return int(string)
+    except:
+        return None
+
 def downloadsnapshot(path : str, prepath=defaultfolder, zoomlevels=defaultzoomlevels, verboselogging=True):
     outputfolder = os.path.join(prepath, path)
     map.download_all_tiles(outputfolder, ZOOM_LEVELS=zoomlevels, verboselogging=verboselogging)
@@ -46,7 +52,10 @@ def getsnapshot(path : str, prepath=defaultfolder):
 
     zoomlevels = []
     for item in contens:
-        zoomlevel = int(item)
+        zoomlevel = getintsafe(item)
+        if zoomlevel == None:
+            continue
+
         imagecount = len(os.listdir(os.path.join(inputfolder, item)))
         zoomlevel = ZoomLevel(zoomlevel, imagecount, inputfolder)
         zoomlevels.append(zoomlevel)
