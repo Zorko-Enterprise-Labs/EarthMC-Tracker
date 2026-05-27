@@ -11,9 +11,9 @@ with con:
             with sqlite3.connect(filename) as conn:
                 conn.cursor().executescript(schema.read())
 
-    def addsnapshot(uuid : str, isOnline : bool, x : int, y : int, z : int, yaw : int):
-        cur.execute("""INSERT INTO snapshots (uuid, playeronline, x, y, z, yaw) VALUES (?, ?, ?, ?, ?, ?) """,
-            (uuid, isOnline, x, y, z, yaw)    
+    def addsnapshot(uuid : str, name : str, isOnline : bool, x : int, y : int, z : int, yaw : int):
+        cur.execute("""INSERT INTO snapshots (uuid, username, playeronline, x, y, z, yaw) VALUES (?, ?, ?, ?, ?, ?, ?) """,
+            (uuid, name, isOnline, x, y, z, yaw)    
         )
         con.commit()
 

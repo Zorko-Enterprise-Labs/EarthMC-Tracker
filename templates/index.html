@@ -97,7 +97,7 @@
         }
 
         .autocomplete-item:hover {
-            background: #444;
+            background: #ffffff;
         }
 
         .autocomplete-item img {
@@ -164,6 +164,7 @@
                 // Ensure we request the correct zoom level and format
                 var zoom = this._getZoomForUrl();
                 return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
+                // return `localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=3&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
             }
         });
 
@@ -211,7 +212,7 @@
         var playerMarkers = {}; // Keep track of marker instances by name
 
         function updatePlayers() {
-            fetch('/map/players_live')
+            fetch('/players/live')
                 .then(response => response.json())
                 .then(players => {
                     window.livePlayers = players;

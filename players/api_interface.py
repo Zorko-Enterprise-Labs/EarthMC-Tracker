@@ -22,6 +22,7 @@ def findplayer(uuid, coordslist):
 def convertcoord(coord, isOnline : bool):
     return {
         "uuid": coord['uuid'],
+        "name": coord['name'],
         "x": coord['x'],
         "y": coord['y'],
         "z": coord['z'],
@@ -77,6 +78,7 @@ def checkonline(uuid : str):
 def getdummycoords(uuid, isOnline):
     return convertcoord({
             "uuid" : uuid,
+            "name" : None,
             "x" : None,
             "y" : None,
             "z" : None,

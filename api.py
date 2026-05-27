@@ -46,7 +46,7 @@ def addsnapshot():
         uuid = reqjson['uuid']
         coords = api_interface.easyfindplayer(uuid, api_interface.getcoordslist())
             
-        sql.addsnapshot(coords['uuid'], coords['isOnline'], coords['x'], coords['y'], coords['z'], coords['yaw'])
+        sql.addsnapshot(coords['uuid'], coords['name'], coords['isOnline'], coords['x'], coords['y'], coords['z'], coords['yaw'])
         snapshotid = sql.getlatestsnapshot(uuid)[0] 
         snapshot = sql.getsnapshotfromid(snapshotid)    
         
@@ -62,7 +62,7 @@ def addsnapshot():
         response = []
         for coord in coords:
             uuid = coord['uuid']
-            sql.addsnapshot(coord['uuid'], coord['isOnline'], coord['x'], coord['y'], coord['z'], coord['yaw'])
+            sql.addsnapshot(coord['uuid'], coord['name'], coord['isOnline'], coord['x'], coord['y'], coord['z'], coord['yaw'])
             snapshotid = sql.getlatestsnapshot(uuid)[0]
             snapshot = sql.getsnapshotfromid(snapshotid)
 
@@ -361,7 +361,7 @@ def deletemapsnapshot():
     return response
     
 
-@app.route("/map/players_live", methods=["GET"])
+@app.route("/players/live", methods=["GET"])
 def live_players():
     # Public route for the map to fetch live players seamlessly
     try:
@@ -397,4 +397,5 @@ def map():
     return render_template("index.html")
 
 if __name__ == "__main__":
+    print("Running as main")
     app.run(host="127.0.0.1", port=5000)

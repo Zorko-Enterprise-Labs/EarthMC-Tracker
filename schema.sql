@@ -25,6 +25,7 @@ CREATE TABLE territorysnapshots (
 CREATE TABLE snapshots (
     ID INTEGER PRIMARY KEY,
     playeronline BOOLEAN,
+    username TEXT,
     uuid TEXT NOT NULL,
     x INT,
     y INT,
