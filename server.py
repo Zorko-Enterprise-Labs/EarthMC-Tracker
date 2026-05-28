@@ -18,6 +18,10 @@ if __name__ == "__main__":
     download_thread = threading.Thread(target=map_server.background_download, daemon=True)
     download_thread.start()
 
+    #fix
+    map_viewer_thread = threading.Thread(target=map_server.start_server, daemon=True)
+    map_viewer_thread.start()
+
     # Start the Flask API server in the main thread
     try:
         run_api_server()

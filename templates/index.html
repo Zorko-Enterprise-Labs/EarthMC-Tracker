@@ -15,19 +15,28 @@
             image-rendering: crisp-edges;
         }
 
-        #loading-banner {
+        #loading-banner, #error-banner {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background: #ffcc00;
-            color: #333;
             padding: 10px 20px;
             border-radius: 5px;
             z-index: 1000;
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0,0,0,0.5);
             display: none;
+            text-align: center;
+        }
+
+        #loading-banner {
+            background: #ffcc00;
+            color: #333;
+        }
+
+        #error-banner {
+            background: #ff4444;
+            color: white;
         }
 
         #search-box {
@@ -97,7 +106,7 @@
         }
 
         .autocomplete-item:hover {
-            background: #444;
+            background: #ffffff;
         }
 
         .autocomplete-item img {
@@ -127,7 +136,8 @@
     </style>
 </head>
 <body>
-    <div id="loading-banner">Please wait while map images are downloading in the background...</div>
+    <div id="loading-banner">Download Warning: Please wait while the server checks all map images. This may take a moment.</div>
+    <div id="error-banner"></div>
     <div id="search-container">
         <div id="search-box">
             <input type="text" id="username-input" placeholder="Search Player..." onkeydown="if(event.key === 'Enter'){ searchPlayer(); }" />
@@ -163,8 +173,8 @@
             getTileUrl: function(coords) {
                 // Ensure we request the correct zoom level and format
                 var zoom = this._getZoomForUrl();
-                // return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
-                return `http://localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=1&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
+                return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
+                // return `localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=3&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
             }
         });
 
@@ -176,7 +186,7 @@
             maxZoom: 7,                 // allows browser upscaling of native zoom 5 up to visual zoom 7
             noWrap: true,               // Don't wrap the map around like a globe
             keepBuffer: 9999,           // Keep all loaded tiles in memory so they aren't unloaded when panning
-            // updateWhenZooming: false,   // Prevents tile updates while zooming to keep it smooth
+            updateWhenZooming: false,   // Prevents tile updates while zooming to keep it smooth
             errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' // Empty transparent pixel for missing tiles (ocean)
         });
 
@@ -188,12 +198,15 @@
                 .then(response => response.json())
                 .then(data => {
                     const banner = document.getElementById('loading-banner');
-                    if (data.downloading) {
+                    if (data.status && data.status !== "idle") {
+                        banner.innerText = "Download Warning: " + data.status;
                         banner.style.display = 'block';
+                        window.isDownloading = true;
                         // Recheck in 3 seconds
                         setTimeout(checkDownloadStatus, 3000);
                     } else {
                         banner.style.display = 'none';
+                        window.isDownloading = false;
                     }
                 })
                 .catch(err => {
@@ -205,6 +218,17 @@
         // Start watching the status
         checkDownloadStatus();
 
+        // Function to show a warning banner instead of an alert
+        function showWarning(message) {
+            const banner = document.getElementById('error-banner');
+            banner.innerText = message;
+            banner.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
+        }
 
         // Layer group to hold player markers so we can easily clear them on refresh
         var playerLayer = L.layerGroup().addTo(map);
@@ -212,7 +236,7 @@
         var playerMarkers = {}; // Keep track of marker instances by name
 
         function updatePlayers() {
-            fetch('/players/liveplayers')
+            fetch('/players/live')
                 .then(response => response.json())
                 .then(players => {
                     window.livePlayers = players;
@@ -221,7 +245,7 @@
                     
                     players.forEach(player => {
                         // Ignore players not in overworld if 'world' is defined, though our custom API might just have coord structure
-                        // if (player.world && player.world !== "minecraft_overworld") return;
+                        if (player.world && player.world !== "minecraft_overworld") return;
                         
                         let name = player.name;
                         currentNames.add(name);
@@ -299,7 +323,11 @@
                 .then(data => {
                     usernameInput.disabled = false;
                     if (data.error) {
-                        alert("Error: " + data.error);
+                        let msg = data.error;
+                        if (window.isDownloading) {
+                            msg += " (Note: The map is still downloading, so this player might not be visible yet.)";
+                        }
+                        showWarning(msg);
                     } else {
                         // Data from server contains exact coordinates of the active UUID
                         let lat = data.z;

@@ -35,13 +35,18 @@ def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoo
     if RATELIMIT_PROTECTION: 
         time.sleep(0.1)
 
-def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=20, verboselogging=True):
+def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=20, verboselogging=True, status_callback=None):
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
 
     for zoom in ZOOM_LEVELS:
+        status_msg = f"Downloading Zoom Level {zoom}..."
         if verboselogging:
-            print(f"\n--- Downloading Zoom Level {zoom} ---")
+            print(f"\n--- {status_msg} ---")
+        
+        if status_callback:
+            status_callback(status_msg)
+
         out_dir = os.path.join(output_folder, str(zoom))
         os.makedirs(out_dir, exist_ok=True)
     

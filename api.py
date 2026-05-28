@@ -11,18 +11,14 @@ from datetime import datetime, timedelta
 
 app = Flask("API", template_folder="templates")
 
-enableOtherServer = False
-
 @app.route("/tiles/<path:filename>")
 def serve_static_tiles(filename):
     return send_from_directory("tiles", filename)
 
 @app.route("/status")
 def download_status():
-    if enableOtherServer:
-        from map import server as map_server
-        return {"downloading": map_server.is_downloading}
-    return {"downloading" : False}
+    from map import server as map_server
+    return {"status": map_server.current_status}
 
 # Options
 # Options
@@ -285,17 +281,11 @@ def gettiles():
         inputtedtile = reqjson.get('tile')
         if not inputtedtile:
             return errors.geterror(6)
-    snapshot = sql.getmapsnapshotfromid(inputtedid)
-    if not snapshot:
-        return errors.geterror(10)
-    # print(snapshotraw)
-    # snapshot = snapshotraw[0]
-
-    snapshotpath = snapshot[1]
-    # if snapshot is None:
-    #     return errors.geterror(8) # Or appropriate error code for not found
-    snapshotfolder = map_interface.getsnapshot(snapshotpath)
-    zoomlevel = snapshotfolder.getzoomlevel(inputtedzoomlevel)
+    snapshotpath = sql.getmapsnapshotfromid(inputtedid)[1]
+    snapshot = map_interface.getsnapshot(snapshotpath)
+    if snapshot is None:
+        return errors.geterror(8) # Or appropriate error code for not found
+    zoomlevel = snapshot.getzoomlevel(inputtedzoomlevel)
 
     if zoomlevel is None:
         return errors.geterror(8)
@@ -371,15 +361,12 @@ def deletemapsnapshot():
     return response
     
 
-@app.route("/players/liveplayers", methods=["GET"])
+@app.route("/players/live", methods=["GET"])
 def live_players():
     # Public route for the map to fetch live players seamlessly
     try:
         players = api_interface.getcoordslist()
-        response = []
-        for player in players:
-            response.append(api_interface.convertcoord(player, True))
-        return response
+        return players
     except Exception as e:
         print(f"Error fetching players: {e}")
         return []
