@@ -212,7 +212,7 @@
         var playerMarkers = {}; // Keep track of marker instances by name
 
         function updatePlayers() {
-            fetch('/players/live')
+            fetch('/players/liveplayers')
                 .then(response => response.json())
                 .then(players => {
                     window.livePlayers = players;
@@ -221,7 +221,7 @@
                     
                     players.forEach(player => {
                         // Ignore players not in overworld if 'world' is defined, though our custom API might just have coord structure
-                        if (player.world && player.world !== "minecraft_overworld") return;
+                        // if (player.world && player.world !== "minecraft_overworld") return;
                         
                         let name = player.name;
                         currentNames.add(name);

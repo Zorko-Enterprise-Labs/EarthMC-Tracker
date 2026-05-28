@@ -371,12 +371,15 @@ def deletemapsnapshot():
     return response
     
 
-@app.route("/players/live", methods=["GET"])
+@app.route("/players/liveplayers", methods=["GET"])
 def live_players():
     # Public route for the map to fetch live players seamlessly
     try:
         players = api_interface.getcoordslist()
-        return players
+        response = []
+        for player in players:
+            response.append(api_interface.convertcoord(player, True))
+        return response
     except Exception as e:
         print(f"Error fetching players: {e}")
         return []
