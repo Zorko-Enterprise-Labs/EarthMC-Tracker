@@ -26,4 +26,6 @@ def geterror(error : int):
         return builderror("Request args is missing a key", 8)
     if error == 9:
         return builderror("Request has no args", 9)
+    if error == 10:
+        return builderror("No such map snapshot exists", 10)
     return builderror("Unknown error", 0)

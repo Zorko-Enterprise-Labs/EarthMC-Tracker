@@ -97,7 +97,7 @@
         }
 
         .autocomplete-item:hover {
-            background: #ffffff;
+            background: #444;
         }
 
         .autocomplete-item img {
@@ -163,8 +163,8 @@
             getTileUrl: function(coords) {
                 // Ensure we request the correct zoom level and format
                 var zoom = this._getZoomForUrl();
-                return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
-                // return `localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=3&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
+                // return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
+                return `http://localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=1&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
             }
         });
 
@@ -176,7 +176,7 @@
             maxZoom: 7,                 // allows browser upscaling of native zoom 5 up to visual zoom 7
             noWrap: true,               // Don't wrap the map around like a globe
             keepBuffer: 9999,           // Keep all loaded tiles in memory so they aren't unloaded when panning
-            updateWhenZooming: false,   // Prevents tile updates while zooming to keep it smooth
+            // updateWhenZooming: false,   // Prevents tile updates while zooming to keep it smooth
             errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' // Empty transparent pixel for missing tiles (ocean)
         });
 

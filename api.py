@@ -11,14 +11,18 @@ from datetime import datetime, timedelta
 
 app = Flask("API", template_folder="templates")
 
+enableOtherServer = False
+
 @app.route("/tiles/<path:filename>")
 def serve_static_tiles(filename):
     return send_from_directory("tiles", filename)
 
 @app.route("/status")
 def download_status():
-    from map import server as map_server
-    return {"downloading": map_server.is_downloading}
+    if enableOtherServer:
+        from map import server as map_server
+        return {"downloading": map_server.is_downloading}
+    return {"downloading" : False}
 
 # Options
 # Options
@@ -281,11 +285,17 @@ def gettiles():
         inputtedtile = reqjson.get('tile')
         if not inputtedtile:
             return errors.geterror(6)
-    snapshotpath = sql.getmapsnapshotfromid(inputtedid)[1]
-    snapshot = map_interface.getsnapshot(snapshotpath)
-    if snapshot is None:
-        return errors.geterror(8) # Or appropriate error code for not found
-    zoomlevel = snapshot.getzoomlevel(inputtedzoomlevel)
+    snapshot = sql.getmapsnapshotfromid(inputtedid)
+    if not snapshot:
+        return errors.geterror(10)
+    # print(snapshotraw)
+    # snapshot = snapshotraw[0]
+
+    snapshotpath = snapshot[1]
+    # if snapshot is None:
+    #     return errors.geterror(8) # Or appropriate error code for not found
+    snapshotfolder = map_interface.getsnapshot(snapshotpath)
+    zoomlevel = snapshotfolder.getzoomlevel(inputtedzoomlevel)
 
     if zoomlevel is None:
         return errors.geterror(8)
