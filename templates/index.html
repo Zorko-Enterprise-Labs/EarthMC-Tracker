@@ -106,7 +106,7 @@
         }
 
         .autocomplete-item:hover {
-            background: #ffffff;
+            background: #444;
         }
 
         .autocomplete-item img {
@@ -173,8 +173,8 @@
             getTileUrl: function(coords) {
                 // Ensure we request the correct zoom level and format
                 var zoom = this._getZoomForUrl();
-                return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
-                // return `localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=3&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
+                // return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
+                return `http://localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=1&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
             }
         });
 
@@ -216,7 +216,7 @@
         }
         
         // Start watching the status
-        checkDownloadStatus();
+        // checkDownloadStatus();
 
         // Function to show a warning banner instead of an alert
         function showWarning(message) {
@@ -236,7 +236,7 @@
         var playerMarkers = {}; // Keep track of marker instances by name
 
         function updatePlayers() {
-            fetch('/players/live')
+            fetch('/players/liveplayers')
                 .then(response => response.json())
                 .then(players => {
                     window.livePlayers = players;
@@ -245,7 +245,7 @@
                     
                     players.forEach(player => {
                         // Ignore players not in overworld if 'world' is defined, though our custom API might just have coord structure
-                        if (player.world && player.world !== "minecraft_overworld") return;
+                        // if (player.world && player.world !== "minecraft_overworld") return;
                         
                         let name = player.name;
                         currentNames.add(name);
@@ -256,7 +256,8 @@
                         
                         let popupContent = `<div style="color: black; min-width: 150px;">
                             <div style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-bottom: 3px;">${player.name}</div>
-                            <table style="font-size: 12px; width: 100%;">`;
+                            <table style="font-size: 12px; width: 100%;">
+                                <tr><td style="padding-right: 10px; font-weight: bold;">$}</td><td style="word-break: break-all;">${player[x]} ${player['y']} ${player['z']}</td></tr>`
                         for (let key in player) {
                             if (key !== 'name') {
                                 popupContent += `<tr><td style="padding-right: 10px; font-weight: bold;">${key}</td><td style="word-break: break-all;">${player[key]}</td></tr>`;

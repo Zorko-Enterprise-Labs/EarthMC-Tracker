@@ -1,4 +1,5 @@
 import sqlite3
+import json
 
 filename = "database.db"
 
@@ -154,3 +155,45 @@ with con:
         )
 
         return cur.fetchall()
+    
+    def createterritorysnapshot(territoryname : str, polygons : [[int]*2], nation : str, townboard : str, isCapital : bool, mapcolour : str):
+        points = json.dumps(polygons)
+        cur.execute("""INSERT INTO territorysnapshots (points, townname, nation, townboard, iscapital, mapcolour) VALUES (?,?,?,?,?,?)""",
+            (points, territoryname, nation, townboard, isCapital, mapcolour)
+        )
+        con.commit()
+    
+    def getallterritorysnapshots():
+        cur.execute("""SELECT * FROM territorysnapshots""")
+        return cur.fetchall()
+    
+    def deleteterritorysnapshot(id : int):
+        cur.execute("""DELETE FROM territorysnapshots WHERE ID = ?""",
+            (id,)
+        )
+        con.commit()
+
+    def getterritorysnapshotbyid(id : int):
+        cur.execute("""SELECT * FROM territorysnapshots WHERE ID = ?""",
+            (id,)
+        )
+        return cur.fetchall()
+    
+    def getterritorysnapshotbytimestamp(timestamp : int):
+        cur.execute("""SELECT * FROM territorysnapshots WHERE Timestamp = ?""",
+            (timestamp,)
+        )
+        return cur.fetchall()
+
+    def getterritorysnapshottimeradius(timestamp : int, timeradius : int):
+        territorysnapshots = getallterritorysnapshots()
+        # if not cur.fetchall():
+        #     return None
+        # result = cur.fetchall()
+        result = []
+        for snapshot in territorysnapshots:
+            territorysnapshottimestamp = snapshot[7]
+            difference = abs(timestamp - territorysnapshottimestamp)
+            if difference <= timeradius:
+                result.append(snapshot)
+        return result

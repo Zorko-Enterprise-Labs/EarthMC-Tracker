@@ -17,8 +17,9 @@ def serve_static_tiles(filename):
 
 @app.route("/status")
 def download_status():
-    from map import server as map_server
-    return {"status": map_server.current_status}
+    # from map import server as map_server
+    # return {"status": map_server.current_status}
+    return {"status":True}
 
 # Options
 # Options
@@ -361,12 +362,15 @@ def deletemapsnapshot():
     return response
     
 
-@app.route("/players/live", methods=["GET"])
-def live_players():
+@app.route("/players/liveplayers", methods=["GET"])
+def liveplayers():
     # Public route for the map to fetch live players seamlessly
     try:
         players = api_interface.getcoordslist()
-        return players
+        response = []
+        for player in players:
+            response.append(api_interface.convertcoord(player, True))
+        return response
     except Exception as e:
         print(f"Error fetching players: {e}")
         return []
