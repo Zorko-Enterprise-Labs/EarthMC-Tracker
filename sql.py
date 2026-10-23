@@ -89,7 +89,7 @@ def migrate(conn):
             "keyhash" : "hashkey(apikey)",
         }
 
-        tables = ["mapsnapshots", "territorysnapshots", "snapshots", "apikeys"]
+        tables = ["mapsnapshots", "territorysnapshots", "snapshots", "trackedplayers", "apikeys"]
         oldtables = [table for table in tables if tableexists(conn, table)]
         for table in oldtables:
             conn.execute(f"ALTER TABLE {table} RENAME TO {table}_old")
@@ -182,6 +182,47 @@ def getsnapshotfromid(snapshotid : int):
     with connect() as conn:
         return conn.execute("""SELECT * FROM snapshots WHERE ID = ?""",
             (snapshotid,)
+        ).fetchone()
+
+def getsnapshotspath(uuid : str, start_ts : int = None, end_ts : int = None):
+    # All snapshots of one player, oldest first, optionally within a time window
+    query = "SELECT * FROM snapshots WHERE uuid = ?"
+    params = [normaliseuuid(uuid)]
+    if start_ts is not None:
+        query += " AND Timestamp >= ?"
+        params.append(start_ts)
+    if end_ts is not None:
+        query += " AND Timestamp <= ?"
+        params.append(end_ts)
+    query += " ORDER BY Timestamp ASC, ID ASC"
+
+    with connect() as conn:
+        return conn.execute(query, params).fetchall()
+
+# Tracked players (the watchlist)
+
+def addtrackedplayer(uuid : str, username : str):
+    # Tracking an already tracked player keeps its original StartedAt
+    with connect() as conn:
+        conn.execute("""INSERT OR IGNORE INTO trackedplayers (uuid, username) VALUES (?, ?)""",
+            (normaliseuuid(uuid), username)
+        )
+
+def removetrackedplayer(uuid : str):
+    with connect() as conn:
+        cur = conn.execute("""DELETE FROM trackedplayers WHERE uuid = ?""",
+            (normaliseuuid(uuid),)
+        )
+        return cur.rowcount > 0
+
+def getalltrackedplayers():
+    with connect() as conn:
+        return conn.execute("""SELECT * FROM trackedplayers ORDER BY StartedAt DESC""").fetchall()
+
+def gettrackedplayerbyuuid(uuid : str):
+    with connect() as conn:
+        return conn.execute("""SELECT * FROM trackedplayers WHERE uuid = ?""",
+            (normaliseuuid(uuid),)
         ).fetchone()
 
 # Map snapshots

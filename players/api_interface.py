@@ -61,11 +61,30 @@ def checkonline(uuid : str):
         return bool(players[0]['status']['isOnline'])
     return False
 
-def getuuid(username : str):
+def checkonlinemany(uuids : list):
+    # One request for several players. Returns the set of (undashed) uuids that are online
+    if not uuids:
+        return set()
+    reqjson = {
+        "query" : [str(uuidlib.UUID(uuid)) for uuid in uuids]
+    }
+    response = requests.post(f"{apiurl}/players", json=reqjson, timeout=TIMEOUT)
+    if response.status_code == 404:
+        return set()
+    response.raise_for_status()
+    return {normaliseuuid(player['uuid']) for player in response.json() if player['status']['isOnline']}
+
+def getprofile(username : str):
+    # Returns (uuid, correctly capitalised name), or None if the username doesn't exist
     response = requests.get(mojangusernameapi + username, timeout=TIMEOUT)
     if response.status_code != 200:
         return None
-    return normaliseuuid(response.json()['id'])
+    profile = response.json()
+    return normaliseuuid(profile['id']), profile['name']
+
+def getuuid(username : str):
+    profile = getprofile(username)
+    return profile[0] if profile else None
 
 def getonlineplayers():
     response = requests.get(f"{apiurl}/online", timeout=TIMEOUT)
@@ -93,6 +112,21 @@ def easyfindplayer(uuid, coordslist):
         return getdummycoords(uuid, isOnline)
 
     return convertcoord(coords, isOnline)
+
+def gettrackedcoords(uuids : list, coordslist):
+    # Like easyfindplayer for a whole watchlist: anyone on the map is online,
+    # everyone else is checked with a single EarthMC request
+    coordsbyuuid = {normaliseuuid(coord['uuid']) : coord for coord in coordslist}
+    uuids = [normaliseuuid(uuid) for uuid in uuids]
+    online = checkonlinemany([uuid for uuid in uuids if uuid not in coordsbyuuid])
+
+    result = []
+    for uuid in uuids:
+        if uuid in coordsbyuuid:
+            result.append(convertcoord(coordsbyuuid[uuid], True))
+        else:
+            result.append(getdummycoords(uuid, uuid in online))
+    return result
 
 def getallcoords(coordslist, onlinelist):
     # Index the map once instead of searching it for every online player

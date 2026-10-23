@@ -1,6 +1,7 @@
 import io
 import os
 import re
+import time
 import threading
 import requests
 import map.api_interface as map_interface
@@ -371,6 +372,130 @@ def search_player():
     if player:
         return player
     return {"error": f"Player '{username}' is not currently online on the EarthMC map."}, 404
+
+# Tracking API
+# Tracking API
+# Tracking API
+# Used by the web map without an api key, so keep the server on 127.0.0.1
+
+# The map calls snapshottracked every refresh, in every open tab. Only record once per interval
+track_interval = 3 # seconds
+tracklock = threading.Lock()
+lasttracked = 0
+
+def formatpathpoint(snapshot):
+    return {
+        "id" : snapshot['ID'],
+        "isOnline" : bool(snapshot['playeronline']),
+        "uuid" : snapshot['uuid'],
+        "x" : snapshot['x'],
+        "y" : snapshot['y'],
+        "z" : snapshot['z'],
+        "yaw" : snapshot['yaw'],
+        "timestamp" : snapshot['Timestamp']
+    }
+
+@app.route("/players/starttrack", methods=["POST"])
+def starttrack():
+    # Add a player to the watchlist, the uuid is looked up from the username
+    reqjson = getjson() or {}
+    username = str(reqjson.get("username") or "").strip()
+    if not username:
+        return errors.geterror(6, "username")
+
+    try:
+        profile = api_interface.getprofile(username)
+    except requests.RequestException:
+        return {"error": "Failed to look up username"}, 502
+    if not profile:
+        return {"error": f"Could not resolve UUID for '{username}'"}, 404
+
+    uuid, name = profile
+    sql.addtrackedplayer(uuid, name)
+    tracked = sql.gettrackedplayerbyuuid(uuid)
+
+    return {
+        "uuid" : tracked['uuid'],
+        "username" : tracked['username'],
+        "started_at" : tracked['StartedAt']
+    }
+
+@app.route("/players/stoptrack", methods=["POST"])
+def stoptrack():
+    # Remove a player from the watchlist. Their recorded snapshots are kept
+    reqjson = getjson() or {}
+    try:
+        uuid = sql.normaliseuuid(reqjson.get("uuid"))
+    except ValueError:
+        return errors.geterror(7, "uuid")
+    return {"removed" : sql.removetrackedplayer(uuid)}
+
+@app.route("/players/tracked", methods=["GET"])
+def listtracked():
+    # Every player on the watchlist with their latest snapshot
+    result = []
+    for tracked in sql.getalltrackedplayers():
+        snapshot = sql.getlatestsnapshot(tracked['uuid'])
+        latest = None
+        if snapshot:
+            latest = {
+                "x" : snapshot['x'],
+                "y" : snapshot['y'],
+                "z" : snapshot['z'],
+                "yaw" : snapshot['yaw'],
+                "timestamp" : snapshot['Timestamp'],
+                "isOnline" : bool(snapshot['playeronline'])
+            }
+
+        result.append({
+            "uuid" : tracked['uuid'],
+            "username" : tracked['username'],
+            "started_at" : tracked['StartedAt'],
+            "latest" : latest
+        })
+    return result
+
+@app.route("/players/path", methods=["GET"])
+def playerpath():
+    # A player's recorded positions, oldest first. Optional start_ts / end_ts (unix seconds)
+    try:
+        uuid = sql.normaliseuuid(request.args.get("uuid"))
+    except ValueError:
+        return errors.geterror(7, "uuid")
+
+    try:
+        start_ts = int(request.args["start_ts"]) if request.args.get("start_ts") else None
+        end_ts = int(request.args["end_ts"]) if request.args.get("end_ts") else None
+    except ValueError:
+        return errors.geterror(7, "start_ts or end_ts")
+
+    return [formatpathpoint(snapshot) for snapshot in sql.getsnapshotspath(uuid, start_ts, end_ts)]
+
+@app.route("/players/snapshottracked", methods=["POST"])
+def snapshottracked():
+    # Record a snapshot of everyone on the watchlist
+    global lasttracked
+    with tracklock:
+        if time.time() - lasttracked < track_interval:
+            return {"snapshotted" : 0}
+        lasttracked = time.time()
+
+        tracked = sql.getalltrackedplayers()
+        if not tracked:
+            return {"snapshotted" : 0}
+
+        try:
+            coords = api_interface.gettrackedcoords([player['uuid'] for player in tracked], api_interface.getcachedcoordslist())
+        except requests.RequestException:
+            return errors.geterror(10)
+
+        # Players hidden from the map have no name in the map data, use the watchlist's
+        names = {player['uuid'] : player['username'] for player in tracked}
+        for coord in coords:
+            coord['name'] = coord['name'] or names.get(coord['uuid'])
+
+        sql.addsnapshots(coords)
+        return {"snapshotted" : len(coords)}
 
 @app.route("/")
 def index():

@@ -39,6 +39,14 @@ CREATE TABLE IF NOT EXISTS snapshots (
 CREATE INDEX IF NOT EXISTS snapshots_uuid_timestamp ON snapshots (uuid, Timestamp);
 CREATE INDEX IF NOT EXISTS snapshots_timestamp ON snapshots (Timestamp);
 
+-- Players on the watchlist. snapshottracked records them every few seconds while the map is open
+CREATE TABLE IF NOT EXISTS trackedplayers (
+    ID INTEGER PRIMARY KEY,
+    uuid TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL,
+    StartedAt INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
 CREATE TABLE IF NOT EXISTS apikeys (
     ID INTEGER PRIMARY KEY,
     createperms BOOLEAN NOT NULL CHECK (createperms IN (0, 1)),

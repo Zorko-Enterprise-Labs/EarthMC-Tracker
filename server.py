@@ -6,6 +6,8 @@ import os
 import api
 from map import server as map_server
 
+print("Starting Project Samaritan...")
+
 def run_api_server():
     print("Starting Flask API Server on http://127.0.0.1:5000 ...")
     # Using use_reloader=False so it doesn't cause issues in a thread

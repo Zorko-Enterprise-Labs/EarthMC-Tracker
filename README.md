@@ -15,9 +15,11 @@ It never ran long-term or publicly. It was only ever run locally.
 
 ## What works
 
-- **Live map** (`/`): EarthMC's map with every visible player drawn live, refreshed every 3 seconds, plus search with autocomplete.
+- **Live map** (`/`): EarthMC's map with every visible player drawn live, refreshed every 3 seconds, plus search with autocomplete and a **Follow** mode that keeps the map centred on one player.
+- **Watchlist**: search a name and click **Track**. While the map is open, every watched player is recorded every 3 seconds, including when they're offline or hidden from the map. **List** shows them with their status and last position.
+- **History**: the ◯ button next to a watched player draws their recorded path. Use the slider to pick a time range, and see the distance and duration.
 - **Player snapshots**: record one player's position (`track`) or every online player at once (`fullsnapshot`), then query them by player, ID or time.
-- **Map snapshots**: download a full copy of the map's tiles (20 parallel workers) so you can view the map as it was at that time.
+- **Map snapshots**: download a full copy of the map's tiles (30 parallel workers) so you can view the map as it was at that time.
 - **API keys** with separate create/read/delete permissions. Only SHA-256 hashes are stored.
 
 ## Running it
@@ -61,6 +63,16 @@ All `POST` endpoints take JSON with an `apikey`. Errors look like `{"error": "..
 | `GET or POST /map/gettiles` | read | `snapshotid`, `zoomlevel`, `tile` (e.g. `104_18`), returns a PNG |
 | `POST /map/deletesnapshots` | delete | `snapshotids: [..]` (deletes the database rows, not the tile files) |
 
+The watchlist endpoints are used by the web map and take **no API key**, which is why the server should stay on `127.0.0.1`:
+
+| Endpoint | Body / params |
+| --- | --- |
+| `POST /players/starttrack` | `username`, returns `uuid`, `username`, `started_at` |
+| `POST /players/stoptrack` | `uuid` (recorded snapshots are kept) |
+| `GET /players/tracked` | every watched player with their latest snapshot |
+| `GET /players/path?uuid=` | a player's snapshots oldest first, optional `start_ts` / `end_ts` |
+| `POST /players/snapshottracked` | records the watchlist, at most once every 3 seconds however many tabs call it |
+
 ## Layout
 
 | Path | What it is |
@@ -79,8 +91,7 @@ All `POST` endpoints take JSON with an `apikey`. Errors look like `{"error": "..
 
 What was planned but never built, roughly in order of usefulness:
 
-1. **Watchlist**: a table of the players under watch. Right now every snapshot has to be requested by hand.
-2. **Automatic tracking**: a background job that snapshots the watchlist every minute or so.
-3. **History view**: select a player on the map and see their recorded positions as a trail, or scrub through time.
-4. **Territory snapshots**: the `territorysnapshots` table and its functions in `sql.py` exist, but nothing fills them or exposes them through the API.
-5. **Coordinate filter**: search snapshots by area as well as by time (`REMEMBER TO ADD COORDINATE RADIUS THING` in `api.py`).
+1. **Tracking without the map open**: the watchlist is only recorded while a browser has the map open, because the page drives it. A background job in `server.py` would let it run unattended.
+2. **Territory snapshots**: the `territorysnapshots` table and its functions in `sql.py` exist, but nothing fills them or exposes them through the API.
+3. **Coordinate filter**: search snapshots by area as well as by time (`REMEMBER TO ADD COORDINATE RADIUS THING` in `api.py`).
+4. **Map snapshot picker**: the map always shows the newest map snapshot on this computer. There's no way to choose an older one to match a player's history.

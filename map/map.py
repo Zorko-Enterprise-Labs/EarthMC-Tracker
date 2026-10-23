@@ -48,7 +48,7 @@ def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoo
     if RATELIMIT_PROTECTION: 
         time.sleep(0.1)
 
-def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=20, verboselogging=True, status_callback=None):
+def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=30, verboselogging=True, status_callback=None):
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
     # requests only keeps 10 connections open by default, give every worker its own
