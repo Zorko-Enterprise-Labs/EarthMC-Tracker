@@ -18,9 +18,9 @@ if __name__ == "__main__":
     download_thread = threading.Thread(target=map_server.background_download, daemon=True)
     download_thread.start()
 
-    #fix
-    map_viewer_thread = threading.Thread(target=map_server.start_server, daemon=True)
-    map_viewer_thread.start()
+    # The old map viewer on :8080 isn't started any more. The API serves the map and tiles itself,
+    # and the viewer shared the whole project folder (database included) with the network.
+    # Run map/server.py directly if you still want it.
 
     # Start the Flask API server in the main thread
     try:

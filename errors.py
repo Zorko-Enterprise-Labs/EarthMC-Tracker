@@ -1,29 +1,29 @@
-import json
+ERRORS = {
+    0: ("Unknown error", 500),
+    1: ("Insufficient permissions", 403),
+    2: ("Unknown action", 400),
+    3: ("Snapshot does not exist", 404),
+    4: ("Request has no JSON content", 400),
+    5: ("No snapshots were provided for deletion", 400),
+    6: ("JSON missing required keys", 400),
+    7: ("Key has incorrect type", 400),
+    8: ("Request args is missing a key", 400),
+    9: ("Request has no args", 400),
+    10: ("EarthMC API is unavailable", 502),
+    11: ("Tile does not exist", 404),
+}
 
-def builderror(text, errorcode):
+def builderror(text, errorcode, status):
     errordict = {
         'error' : text,
         'errorcode' : errorcode
     }
-    return json.dumps(errordict)
+    return errordict, status
 
-def geterror(error : int):
-    if error == 1:
-        return builderror("Insufficient permissions", 1)
-    if error == 2:
-        return builderror("Unknown action", 2)
-    if error == 3:
-        return builderror("Snapshot does not exist", 3)
-    if error == 4:
-        return builderror("Request has no JSON content", 4)
-    if error == 5:
-        return builderror("No snapshots were provided for deletion", 5)
-    if error == 6:
-        return builderror("JSON missing required keys", 6)
-    if error == 7:
-        return builderror("Key has incorrect type", 7)
-    if error == 8:
-        return builderror("Request args is missing a key", 8)
-    if error == 9:
-        return builderror("Request has no args", 9)
-    return builderror("Unknown error", 0)
+def geterror(error : int, detail : str = None):
+    if error not in ERRORS:
+        error = 0
+    text, status = ERRORS[error]
+    if detail:
+        text = f"{text}: {detail}"
+    return builderror(text, error, status)

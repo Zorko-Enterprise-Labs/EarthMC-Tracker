@@ -169,12 +169,17 @@
            Leaflet normally requests tiles using {z}/{x}/{y}.png
            Squaremap saves them as {z}/{x}_{y}.png 
         */
+        // Which map snapshot to show. null = the live tiles server.py downloads into tiles/minecraft_overworld
+        var snapshotid = null;
+
         L.TileLayer.Squaremap = L.TileLayer.extend({
             getTileUrl: function(coords) {
                 // Ensure we request the correct zoom level and format
                 var zoom = this._getZoomForUrl();
-                // return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
-                return `http://localhost:5000/map/gettiles?apikey=${apikey}&snapshotid=1&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
+                if (snapshotid === null) {
+                    return `/tiles/minecraft_overworld/${zoom}/${coords.x}_${coords.y}.png`;
+                }
+                return `/map/gettiles?apikey=${apikey}&snapshotid=${snapshotid}&zoomlevel=${zoom}&tile=${coords.x}_${coords.y}`
             }
         });
 
@@ -190,7 +195,21 @@
             errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' // Empty transparent pixel for missing tiles (ocean)
         });
 
-        earthmcLayer.addTo(map);
+        // Use the newest finished snapshot whose tiles are on this computer, otherwise the live tiles
+        fetch('/map/getsnapshots', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apikey: apikey })
+        })
+            .then(response => response.json())
+            .then(snapshots => {
+                const latest = Array.isArray(snapshots) ? snapshots.find(s => s.completed && s.available) : null;
+                if (latest) {
+                    snapshotid = latest.id;
+                }
+            })
+            .catch(err => console.error("Error fetching map snapshots, using live tiles:", err))
+            .finally(() => earthmcLayer.addTo(map));
 
         // Check the server status to see if tiles are actively downloading
         function checkDownloadStatus() {
@@ -233,83 +252,108 @@
         // Layer group to hold player markers so we can easily clear them on refresh
         var playerLayer = L.layerGroup().addTo(map);
         window.livePlayers = [];
-        var playerMarkers = {}; // Keep track of marker instances by name
+        var playerMarkers = {}; // Keep track of marker instances by uuid
+        const PLAYER_REFRESH_MS = 3000;
+        var playersFailing = false;
+
+        // Player data goes into HTML, so escape it
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+        }
+
+        function playerPopup(player) {
+            const row = (label, value) => `<tr><td style="padding-right: 10px; font-weight: bold;">${label}</td><td style="word-break: break-all;">${escapeHtml(value)}</td></tr>`;
+            return `<div style="color: black; min-width: 150px;">
+                <div style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-bottom: 3px;">${escapeHtml(player.name)}</div>
+                <table style="font-size: 12px; width: 100%;">
+                    ${row('X Y Z', `${player.x} ${player.y} ${player.z}`)}
+                    ${row('Facing', `${player.yaw}°`)}
+                    ${row('UUID', player.uuid)}
+                </table>
+            </div>`;
+        }
+
+        function playerIcon(player) {
+            // Custom div icon with Minecraft head and player name inline
+            const name = escapeHtml(player.name);
+            return L.divIcon({
+                className: 'player-custom-icon',
+                html: `
+                    <div style="display: flex; align-items: center; white-space: nowrap; transform: translate(-50%, -50%); cursor: pointer;">
+                        <div style="width: 16px; height: 16px; border: 1px solid #000; line-height: 0; background: #000;">
+                            <img src="https://minotar.net/helm/${encodeURIComponent(player.name)}/16.png" alt="head" style="width: 16px; height: 16px; image-rendering: pixelated; display: block;">
+                        </div>
+                        <div style="background: rgba(0, 0, 0, 0.6); margin-left: 2px; padding: 2px 5px; border-radius: 2px; border: 1px solid #000;">
+                            <span style="color: white; font-size: 13px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; text-shadow: 1px 1px 0 #000;">${name}</span>
+                        </div>
+                    </div>
+                `,
+                iconSize: [0, 0], // Center the HTML structure physically
+                iconAnchor: [0, 0] // Anchor strictly to coordinate center
+            });
+        }
+
+        function drawPlayers(players) {
+            window.livePlayers = players;
+            let currentUuids = new Set();
+
+            players.forEach(player => {
+                // Players hidden from the map have no coordinates
+                if (player.x === null || player.z === null) return;
+                currentUuids.add(player.uuid);
+
+                // EarthMC mapping uses Z for Lat, and X for Lng.
+                let latlng = [player.z, player.x];
+
+                if (playerMarkers[player.uuid]) {
+                    // Update existing marker position and popup
+                    playerMarkers[player.uuid].setLatLng(latlng);
+                    playerMarkers[player.uuid].getPopup().setContent(playerPopup(player));
+                } else {
+                    let marker = L.marker(latlng, {icon: playerIcon(player), zIndexOffset: 1000})
+                        .bindPopup(playerPopup(player), { offset: [0, -10] });
+                    marker.addTo(playerLayer);
+                    playerMarkers[player.uuid] = marker;
+                }
+            });
+
+            // Remove players that are no longer active
+            for (let uuid in playerMarkers) {
+                if (!currentUuids.has(uuid)) {
+                    playerLayer.removeLayer(playerMarkers[uuid]);
+                    delete playerMarkers[uuid];
+                }
+            }
+        }
 
         function updatePlayers() {
             fetch('/players/liveplayers')
-                .then(response => response.json())
-                .then(players => {
-                    window.livePlayers = players;
-                    
-                    let currentNames = new Set();
-                    
-                    players.forEach(player => {
-                        // Ignore players not in overworld if 'world' is defined, though our custom API might just have coord structure
-                        // if (player.world && player.world !== "minecraft_overworld") return;
-                        
-                        let name = player.name;
-                        currentNames.add(name);
-
-                        // EarthMC mapping uses Z for Lat, and X for Lng.
-                        let lat = player.z;
-                        let lng = player.x;
-                        
-                        let popupContent = `<div style="color: black; min-width: 150px;">
-                            <div style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-bottom: 3px;">${player.name}</div>
-                            <table style="font-size: 12px; width: 100%;">
-                                <tr><td style="padding-right: 10px; font-weight: bold;">$}</td><td style="word-break: break-all;">${player[x]} ${player['y']} ${player['z']}</td></tr>`
-                        for (let key in player) {
-                            if (key !== 'name') {
-                                popupContent += `<tr><td style="padding-right: 10px; font-weight: bold;">${key}</td><td style="word-break: break-all;">${player[key]}</td></tr>`;
-                            }
-                        }
-                        popupContent += `</table></div>`;
-
-                        if (playerMarkers[name]) {
-                            // Update existing marker position
-                            playerMarkers[name].setLatLng([lat, lng]);
-                            // Update popup content just in case properties changed
-                            playerMarkers[name].getPopup().setContent(popupContent);
-                        } else {
-                            // Create custom div icon with Minecraft head and player name inline
-                            let customIcon = L.divIcon({
-                                className: 'player-custom-icon',
-                                html: `
-                                    <div style="display: flex; align-items: center; white-space: nowrap; transform: translate(-50%, -50%); cursor: pointer;">
-                                        <div style="width: 16px; height: 16px; border: 1px solid #000; line-height: 0; background: #000;">
-                                            <img src="https://minotar.net/helm/${player.name}/16.png" alt="head" style="width: 16px; height: 16px; image-rendering: pixelated; display: block;">
-                                        </div>
-                                        <div style="background: rgba(0, 0, 0, 0.6); margin-left: 2px; padding: 2px 5px; border-radius: 2px; border: 1px solid #000;">
-                                            <span style="color: white; font-size: 13px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: bold; text-shadow: 1px 1px 0 #000;">${player.name}</span>
-                                        </div>
-                                    </div>
-                                `,
-                                iconSize: [0, 0], // Center the HTML structure physically
-                                iconAnchor: [0, 0] // Anchor strictly to coordinate center
-                            });
-
-                            let marker = L.marker([lat, lng], {icon: customIcon, zIndexOffset: 1000})
-                                .bindPopup(popupContent, { offset: [0, -10] });
-                            
-                            marker.addTo(playerLayer);
-                            playerMarkers[name] = marker;
-                        }
-                    });
-                    
-                    // Remove players that are no longer active
-                    for (let name in playerMarkers) {
-                        if (!currentNames.has(name)) {
-                            playerLayer.removeLayer(playerMarkers[name]);
-                            delete playerMarkers[name];
-                        }
-                    }
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
                 })
-                .catch(err => console.error("Error fetching live players:", err));
+                .then(players => {
+                    playersFailing = false;
+                    drawPlayers(players);
+                })
+                .catch(err => {
+                    console.error("Error fetching live players:", err);
+                    // Only warn once per outage, not every refresh
+                    if (!playersFailing) showWarning("Couldn't load live players, retrying...");
+                    playersFailing = true;
+                })
+                // Wait for each refresh to finish before scheduling the next, so slow requests can't pile up
+                .finally(() => setTimeout(updatePlayers, PLAYER_REFRESH_MS));
         }
 
-        // Fetch players immediately, and then every 10 seconds
         updatePlayers();
-        setInterval(updatePlayers, 3000);
+
+        function focusPlayer(player) {
+            // Pan and zoom the map exactly to their position
+            map.setView([player.z, player.x], 6);
+            const marker = playerMarkers[player.uuid];
+            if (marker) marker.openPopup();
+        }
 
         // Search logic connecting Frontend -> Server -> Map
         function searchPlayer() {
@@ -317,12 +361,18 @@
             const username = usernameInput.value.trim();
             if (!username) return;
 
+            // Players already on the map don't need a server round trip
+            const onmap = window.livePlayers.find(p => p.name && p.name.toLowerCase() === username.toLowerCase());
+            if (onmap && onmap.x !== null) {
+                focusPlayer(onmap);
+                return;
+            }
+
             usernameInput.disabled = true;
 
             fetch(`/players/search?username=${encodeURIComponent(username)}`)
                 .then(res => res.json())
                 .then(data => {
-                    usernameInput.disabled = false;
                     if (data.error) {
                         let msg = data.error;
                         if (window.isDownloading) {
@@ -331,15 +381,14 @@
                         showWarning(msg);
                     } else {
                         // Data from server contains exact coordinates of the active UUID
-                        let lat = data.z;
-                        let lng = data.x;
-                        
-                        // Pan and zoom the map exactly to their position
-                        map.setView([lat, lng], 6); // Max zoom or high zoom
+                        focusPlayer(data);
                     }
                 })
                 .catch(err => {
                     console.error("Search failed:", err);
+                    showWarning("Search failed, is the server running?");
+                })
+                .finally(() => {
                     usernameInput.disabled = false;
                 });
         }
@@ -374,8 +423,8 @@
                 const div = document.createElement('div');
                 div.className = 'autocomplete-item';
                 div.innerHTML = `
-                    <img src="https://minotar.net/helm/${match.name}/20.png" alt="head">
-                    <span>${match.name}</span>
+                    <img src="https://minotar.net/helm/${encodeURIComponent(match.name)}/20.png" alt="head">
+                    <span>${escapeHtml(match.name)}</span>
                 `;
                 
                 div.onclick = function() {

@@ -1,2 +1,3 @@
-@REM MAKE SURE TO DO pip install gunicorn BEFORE RUNNING SCRIPT
-gunicorn api:app --bind 0.0.0.0:5000 --workers 28
+@REM gunicorn doesn't run on Windows, so this uses Flask's built-in server instead.
+@REM For the map and tile downloader as well, run: python server.py
+python api.py

@@ -18,16 +18,29 @@ DEFAULT_RATELIMIT_PROTECTION = False
 # ZOOM_LEVELS = [0, 1, 2, 3, 4, 5]
 DEFAULT_ZOOM_LEVELS = [0,1,2,3,4,5]
 
+# Seconds before giving up on a tile, so a stuck request can't block a worker forever
+TILE_TIMEOUT = 15
+
 def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoom, RATELIMIT_PROTECTION, verboselogging=True):
     # Skip if already downloaded
     if os.path.exists(file_path):
         return
-        
-    res = session.get(tile_url)
-    
+
+    try:
+        res = session.get(tile_url, timeout=TILE_TIMEOUT)
+    except requests.RequestException as e:
+        # One failed tile shouldn't stop the whole download, it gets retried on the next run
+        if verboselogging:
+            print(f"[{count}/{total_tiles}] Failed {tx}_{tz}.png (Zoom {zoom}): {e}")
+        return
+
     if res.status_code == 200:
-        with open(file_path, 'wb') as f:
+        # Write to a temp file first, so an interrupted download never leaves a half-written
+        # tile that would be skipped as "already downloaded" forever
+        temp_path = file_path + ".part"
+        with open(temp_path, 'wb') as f:
             f.write(res.content)
+        os.replace(temp_path, file_path)
         if verboselogging:
             print(f"[{count}/{total_tiles}] Downloaded {tx}_{tz}.png (Zoom {zoom})")
     
@@ -38,6 +51,9 @@ def _download_tile(session, tile_url, file_path, count, total_tiles, tx, tz, zoo
 def download_all_tiles(output_folder, ZOOM_LEVELS=DEFAULT_ZOOM_LEVELS, RATELIMIT_PROTECTION=DEFAULT_RATELIMIT_PROTECTION, max_workers=20, verboselogging=True, status_callback=None):
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
+    # requests only keeps 10 connections open by default, give every worker its own
+    adapter = requests.adapters.HTTPAdapter(pool_connections=1, pool_maxsize=max_workers)
+    session.mount("https://", adapter)
 
     for zoom in ZOOM_LEVELS:
         status_msg = f"Downloading Zoom Level {zoom}..."

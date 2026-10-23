@@ -1,2 +1,13 @@
 tiles/
 maptiles/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# SQLite's write-ahead log, only exists while the server is running
+database.db-wal
+database.db-shm
+
+# Secrets
+players/key.txt
